@@ -1,0 +1,9 @@
+{
+  "name": "JuegoMental.Runtime",
+  "rootNamespace": "JuegoMental",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "autoReferenced": true
+}

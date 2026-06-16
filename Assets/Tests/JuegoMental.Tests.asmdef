@@ -1,0 +1,9 @@
+{
+  "name": "JuegoMental.Tests",
+  "references": ["JuegoMental.Runtime"],
+  "includePlatforms": ["Editor"],
+  "precompiledReferences": ["nunit.framework.dll"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}
