@@ -80,18 +80,63 @@ public static class SceneBuilder
 
     // ---------- prefabs ----------
 
+    // crea un miembro que rota desde su articulacion; el sprite cuelga hacia abajo
+    static Transform MakeLimb(string name, Transform parent, Vector3 joint, string sprite, int order, out Transform spriteTr)
+    {
+        var limb = new GameObject(name).transform;
+        limb.SetParent(parent);
+        limb.localPosition = joint;
+        limb.localRotation = Quaternion.identity;
+        limb.localScale = Vector3.one;
+        var sGo = new GameObject("S");
+        sGo.transform.SetParent(limb);
+        var sr = sGo.AddComponent<SpriteRenderer>();
+        sr.sprite = S(sprite);
+        sr.sortingOrder = order;
+        float hUnits = sr.sprite.bounds.size.y;
+        sGo.transform.localPosition = new Vector3(0f, -hUnits / 2f, 0f);
+        spriteTr = sGo.transform;
+        return limb;
+    }
+
     static GameObject BuildPlayerPrefab()
     {
         var go = new GameObject("Player") { tag = "Player", layer = LayerMask.NameToLayer("Player") };
-        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = S("player_idle"); sr.sortingOrder = 10;
         var rb = go.AddComponent<Rigidbody2D>();
         rb.gravityScale = 3f;
         rb.freezeRotation = true;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         var col = go.AddComponent<CapsuleCollider2D>();
-        col.size = new Vector2(0.8f, 1.4f);
+        col.size = new Vector2(0.7f, 1.6f);
+        col.offset = new Vector2(0f, -0.05f);
 
-        var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(0f, -0.75f, 0f);
+        // miembros (detras del torso)
+        MakeLimb("LegBack",  go.transform, new Vector3(0.1f, -0.15f, 0f), "p_leg", 8, out _);
+        MakeLimb("ArmBack",  go.transform, new Vector3(0.18f, 0.45f, 0f), "p_arm", 8, out _);
+        var legBack = go.transform.Find("LegBack");
+        var armBack = go.transform.Find("ArmBack");
+
+        // torso con cara
+        var torsoGo = new GameObject("Torso");
+        torsoGo.transform.SetParent(go.transform);
+        torsoGo.transform.localPosition = Vector3.zero;
+        var tsr = torsoGo.AddComponent<SpriteRenderer>();
+        tsr.sprite = S("p_torso"); tsr.sortingOrder = 10;
+
+        // miembros frontales (delante del torso)
+        var legFront = MakeLimb("LegFront", go.transform, new Vector3(-0.1f, -0.15f, 0f), "p_leg", 12, out _);
+        Transform armFrontSprite;
+        var armFront = MakeLimb("ArmFront", go.transform, new Vector3(-0.18f, 0.45f, 0f), "p_arm", 12, out armFrontSprite);
+
+        // espada en la mano del brazo frontal (oculta hasta atacar)
+        var swordGo = new GameObject("Sword");
+        swordGo.transform.SetParent(armFront);
+        swordGo.transform.localPosition = new Vector3(0f, -0.55f, 0f);
+        swordGo.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
+        var swsr = swordGo.AddComponent<SpriteRenderer>();
+        swsr.sprite = S("p_sword"); swsr.sortingOrder = 13;
+
+        var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(0f, -0.8f, 0f);
         var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.6f, 0f, 0f);
 
         var pc = go.AddComponent<PlayerController2D>();
@@ -99,12 +144,12 @@ public static class SceneBuilder
         pc.groundMask = Mask("Ground");
         pc.moveSpeed = 6f;
         pc.jumpForce = 12f;
+        pc.maxJumps = 2;
 
-        var anim = go.AddComponent<PlayerAnimator>();
-        anim.idle = S("player_idle");
-        anim.walkA = S("player_walk_a");
-        anim.walkB = S("player_walk_b");
-        anim.attack = S("player_attack");
+        var anim = go.AddComponent<LimbAnimator>();
+        anim.armFront = armFront; anim.armBack = armBack;
+        anim.legFront = legFront; anim.legBack = legBack;
+        anim.sword = swordGo;
 
         var pa = go.AddComponent<PlayerAttack>();
         pa.enemyMask = Mask("Enemy");
@@ -181,7 +226,7 @@ public static class SceneBuilder
         bgGo.transform.localPosition = new Vector3(0f, 0f, 20f);
         bgGo.transform.localScale = new Vector3(7f, 7f, 1f);
         var bsr = bgGo.AddComponent<SpriteRenderer>();
-        bsr.sprite = S("bg_forest");
+        bsr.sprite = S("bg_cave");
         bsr.sortingOrder = -100;
 
         return cam;
@@ -235,35 +280,35 @@ public static class SceneBuilder
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        var pl = Spawn(player, new Vector3(-26f, -1.5f, 0f));
-        CreateCamera(new Color(0.43f, 0.66f, 0.43f), pl.transform);
+        const float startX = -75f;
+        const float endX = 75f;
+
+        var pl = Spawn(player, new Vector3(startX, -1.5f, 0f));
+        CreateCamera(new Color(0.18f, 0.30f, 0.34f), pl.transform);
         var cortisol = pl.GetComponent<CortisolSystem>();
 
-        // suelo largo (nivel ancho)
-        CreatePlatform(new Vector2(0f, -3f), new Vector2(70f, 1f));
-        // plataformas repartidas a lo ancho
-        CreatePlatform(new Vector2(-14f, 0f), new Vector2(4f, 0.4f));
-        CreatePlatform(new Vector2(-6f, 1.2f), new Vector2(4f, 0.4f));
-        CreatePlatform(new Vector2(4f, 0.6f), new Vector2(4f, 0.4f));
-        CreatePlatform(new Vector2(14f, 1.4f), new Vector2(4f, 0.4f));
+        // suelo muy largo
+        CreatePlatform(new Vector2(0f, -3f), new Vector2(170f, 1f));
 
-        // enemigos repartidos
-        Spawn(patrol, new Vector3(-18f, -2f, 0f));
-        Spawn(patrol, new Vector3(-2f, -2f, 0f));
-        Spawn(patrol, new Vector3(12f, -2f, 0f));
-        Spawn(patrol, new Vector3(22f, -2f, 0f));
+        // contenido repartido a lo ancho de forma deterministica
+        for (int i = 0; i < 14; i++)
+        {
+            float x = startX + 6f + i * 10f;
 
-        // objetos buenos y malos repartidos
-        Spawn(good, new Vector3(-20f, -2f, 0f));
-        Spawn(good, new Vector3(-6f, 1.9f, 0f));
-        Spawn(good, new Vector3(8f, -2f, 0f));
-        Spawn(good, new Vector3(14f, 2.1f, 0f));
-        Spawn(bad, new Vector3(-10f, -2f, 0f));
-        Spawn(bad, new Vector3(2f, -2f, 0f));
-        Spawn(bad, new Vector3(18f, -2f, 0f));
+            // plataforma flotante alternando altura
+            float py = (i % 2 == 0) ? 0.6f : 1.6f;
+            CreatePlatform(new Vector2(x + 2f, py), new Vector2(4f, 0.4f));
+
+            // enemigo patrulla en el suelo
+            Spawn(patrol, new Vector3(x, -2f, 0f));
+
+            // objetos: bueno arriba en la plataforma, malo en el suelo
+            Spawn(good, new Vector3(x + 2f, py + 0.8f, 0f));
+            if (i % 2 == 0) Spawn(bad, new Vector3(x + 5f, -2f, 0f));
+        }
 
         // puerta de salida al final
-        var d = Spawn(door, new Vector3(30f, -2f, 0f));
+        var d = Spawn(door, new Vector3(endX, -2f, 0f));
         var ld = d.GetComponent<LevelDoor>();
         ld.mode = LevelDoor.Mode.ExitToHub;
         ld.floor = 1;

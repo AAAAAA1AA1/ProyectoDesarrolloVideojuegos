@@ -11,13 +11,11 @@ namespace JuegoMental
         public Transform attackOrigin; // punto frente al jugador
 
         float _next;
-        SpriteRenderer _sr;
-        PlayerAnimator _anim;
+        LimbAnimator _anim;
 
         void Awake()
         {
-            _sr = GetComponent<SpriteRenderer>();
-            _anim = GetComponent<PlayerAnimator>();
+            _anim = GetComponentInChildren<LimbAnimator>();
         }
 
         void Update()
@@ -32,7 +30,7 @@ namespace JuegoMental
 
         void DoAttack()
         {
-            Vector2 dir = (_sr != null && _sr.flipX) ? Vector2.left : Vector2.right;
+            Vector2 dir = transform.localScale.x < 0f ? Vector2.left : Vector2.right;
             Vector2 origin = attackOrigin != null
                 ? (Vector2)attackOrigin.position
                 : (Vector2)transform.position + dir * 0.5f;

@@ -17,6 +17,15 @@ public static class PixelArtGenerator
         SaveSprite("player_walk_b.png",   Player(2, false));
         SaveSprite("player_attack.png",   Player(0, true));
 
+        // Partes articuladas (personaje con huesos: torso+cabeza, brazo, pierna, espada).
+        SaveSprite("p_torso.png", Torso());
+        SaveSprite("p_arm.png",   Limb(3, 8, new Color32(70, 120, 70, 255), new Color32(220, 170, 120, 255)));
+        SaveSprite("p_leg.png",   Limb(4, 9, new Color32(80, 60, 40, 255), new Color32(50, 40, 30, 255)));
+        SaveSprite("p_sword.png", Sword());
+
+        // Fondo tipo cueva (aproximacion al estilo enviado).
+        SaveSprite("bg_cave.png", CaveBg());
+
         // Enemigos.
         SaveSprite("enemy_patrol.png",  Box(16, 16, new Color32(20, 20, 20, 255)));   // caja negra
         SaveSprite("enemy_chaser.png",  Circle(16, new Color32(200, 30, 30, 255)));    // circulo rojo
@@ -78,6 +87,63 @@ public static class PixelArtGenerator
         return px;
     }
 
+    // Torso con cabeza y cara (12x18). Sin brazos ni piernas (van aparte).
+    static Color32[] Torso()
+    {
+        int w = 12, h = 18;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        var skin = new Color32(220, 170, 120, 255);
+        var hair = new Color32(90, 60, 30, 255);
+        var shirt = new Color32(70, 120, 70, 255);
+        var eyeB = new Color32(30, 30, 40, 255);
+        var mouth = new Color32(150, 70, 70, 255);
+
+        Rect(px, w, 3, 11, 6, 5, skin);   // cabeza
+        Rect(px, w, 3, 15, 6, 2, hair);   // pelo
+        Rect(px, w, 4, 13, 1, 1, eyeB);   // ojo izq
+        Rect(px, w, 7, 13, 1, 1, eyeB);   // ojo der
+        Rect(px, w, 5, 11, 2, 1, mouth);  // boca
+        Rect(px, w, 2, 1, 8, 10, shirt);  // torso
+        return px;
+    }
+
+    // Miembro vertical: parte alta de tela, parte baja "mano/pie".
+    static Color32[] Limb(int w, int h, Color32 top, Color32 tip)
+    {
+        var px = Fill(w, h, top);
+        for (int y = 0; y < 2; y++)
+        for (int x = 0; x < w; x++)
+            px[y * w + x] = tip;
+        return px;
+    }
+
+    static Color32[] Sword()
+    {
+        int w = 12, h = 4;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        Rect(px, w, 0, 1, 3, 2, new Color32(110, 80, 50, 255));   // mango
+        Rect(px, w, 3, 1, 9, 2, new Color32(210, 210, 225, 255)); // hoja
+        return px;
+    }
+
+    static Color32[] CaveBg()
+    {
+        int w = 64, h = 36;
+        var px = Fill(w, h, new Color32(38, 66, 78, 255)); // teal oscuro
+        // resplandor central mas claro
+        Rect(px, w, 22, 14, 20, 18, new Color32(70, 105, 115, 255));
+        Rect(px, w, 27, 16, 10, 16, new Color32(95, 135, 145, 255));
+        // pilares de roca
+        Rect(px, w, 6, 9, 6, 24, new Color32(120, 140, 150, 255));
+        Rect(px, w, 29, 9, 6, 22, new Color32(120, 140, 150, 255));
+        Rect(px, w, 52, 9, 6, 24, new Color32(120, 140, 150, 255));
+        // pasto arriba del suelo
+        Rect(px, w, 0, 7, w, 3, new Color32(70, 150, 70, 255));
+        // tierra
+        Rect(px, w, 0, 0, w, 7, new Color32(115, 72, 45, 255));
+        return px;
+    }
+
     static Color32[] Box(int w, int h, Color32 c) => Fill(w, h, c);
 
     static Color32[] Circle(int d, Color32 c)
@@ -134,6 +200,11 @@ public static class PixelArtGenerator
             case "item_good.png":     return (12, 16);
             case "item_bad.png":      return (10, 18);
             case "bg_forest.png":     return (64, 36);
+            case "bg_cave.png":       return (64, 36);
+            case "p_torso.png":       return (12, 18);
+            case "p_arm.png":         return (3, 8);
+            case "p_leg.png":         return (4, 9);
+            case "p_sword.png":       return (12, 4);
             case "door.png":          return (20, 32);
             default:                  return (16, 16);
         }
