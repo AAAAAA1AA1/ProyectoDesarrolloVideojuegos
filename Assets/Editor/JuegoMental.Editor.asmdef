@@ -1,6 +1,6 @@
 {
   "name": "JuegoMental.Editor",
-  "references": ["JuegoMental.Runtime"],
+  "references": ["JuegoMental.Runtime", "UnityEngine.UI"],
   "includePlatforms": ["Editor"],
   "autoReferenced": true
 }
