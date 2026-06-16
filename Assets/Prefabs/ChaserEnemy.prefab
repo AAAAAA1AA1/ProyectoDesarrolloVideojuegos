@@ -315,4 +315,9 @@ MonoBehaviour:
   contactCortisol: 15
   contactCooldown: 1
   speed: 2.5
-  detectRange: 6
+  detectRange: 8
+  projectilePrefab: {fileID: 6116449436930766862, guid: c15632f81c59ded4fa84dc52ae97b746, type: 3}
+  shootRange: 9
+  shootCooldown: 2
+  projectileSpeed: 6
+  projectileCortisol: 12

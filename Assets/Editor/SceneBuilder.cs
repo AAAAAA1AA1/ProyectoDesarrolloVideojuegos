@@ -42,18 +42,35 @@ public static class SceneBuilder
         Directory.CreateDirectory(SceneDir);
 
         var player = BuildPlayerPrefab();
-        var patrol = BuildEnemyPrefab("PatrolEnemy", "enemy_patrol", typeof(PatrolEnemy));
-        BuildEnemyPrefab("ChaserEnemy", "enemy_chaser", typeof(ChaserEnemy));
+        var projectile = BuildProjectilePrefab();
+        var melee = BuildEnemyPrefab("PatrolEnemy", "enemy_patrol", typeof(PatrolEnemy));
+        var ranged = BuildEnemyPrefab("ChaserEnemy", "enemy_chaser", typeof(ChaserEnemy));
+        var ce = ranged.GetComponent<ChaserEnemy>();
+        ce.projectilePrefab = projectile;
+        PrefabUtility.SavePrefabAsset(ranged);
         var good = BuildPickupPrefab("PickupGood", "item_good", PickupKind.Good);
         var bad = BuildPickupPrefab("PickupBad", "item_bad", PickupKind.Bad);
         var door = BuildDoorPrefab();
 
         BuildHub(player, door);
-        BuildLevel01(player, patrol, good, bad, door);
+        for (int f = 1; f <= 10; f++)
+            BuildLevel(f, player, melee, ranged, good, bad, door);
 
         SetBuildSettings();
         AssetDatabase.SaveAssets();
-        Debug.Log("Escenas construidas: Hub + Level_01");
+        Debug.Log("Escenas construidas: Hub + 10 niveles");
+    }
+
+    static GameObject BuildProjectilePrefab()
+    {
+        var go = new GameObject("Projectile");
+        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = S("projectile"); sr.sortingOrder = 9;
+        var rb = go.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Kinematic;
+        var col = go.AddComponent<CircleCollider2D>(); col.isTrigger = true; col.radius = 0.25f;
+        go.AddComponent<EnemyProjectile>();
+        var prefab = PrefabUtility.SaveAsPrefabAsset(go, PrefabDir + "/Projectile.prefab");
+        Object.DestroyImmediate(go);
+        return prefab;
     }
 
     // ---------- helpers ----------
@@ -410,7 +427,8 @@ public static class SceneBuilder
         EditorSceneManager.SaveScene(scene, SceneDir + "/Hub.unity");
     }
 
-    static void BuildLevel01(GameObject player, GameObject patrol, GameObject good, GameObject bad, GameObject door)
+    static void BuildLevel(int floor, GameObject player, GameObject melee, GameObject ranged,
+                           GameObject good, GameObject bad, GameObject door)
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -418,43 +436,48 @@ public static class SceneBuilder
         const float endX = 75f;
 
         var pl = Spawn(player, new Vector3(startX, -1.2f, 0f));
-        CreateCamera(new Color(0.18f, 0.30f, 0.34f), pl.transform);
+        // tono de fondo levemente mas oscuro segun el piso
+        float t = (floor - 1) / 9f;
+        CreateCamera(new Color(0.20f - 0.06f * t, 0.32f - 0.10f * t, 0.36f - 0.10f * t), pl.transform);
         var cortisol = pl.GetComponent<CortisolSystem>();
 
-        // suelo muy largo
+        // suelo muy largo + muros
         CreatePlatform(new Vector2(0f, -3f), new Vector2(170f, 1f));
-
-        // muros en ambos extremos para que el personaje no se caiga
         CreateWall(new Vector2(startX - 1.5f, 1.5f), new Vector2(1.5f, 16f));
         CreateWall(new Vector2(endX + 1.5f, 1.5f), new Vector2(1.5f, 16f));
 
-        // contenido repartido a lo ancho de forma deterministica
+        // dificultad escalada por piso
+        int meleeCount = Mathf.Clamp(3 + floor, 3, 14);
+        int rangedCount = floor >= 3 ? Mathf.Clamp(floor - 2, 0, 7) : 0;
+
         for (int i = 0; i < 14; i++)
         {
             float x = startX + 6f + i * 10f;
-
-            // plataforma flotante alternando altura
             float py = (i % 2 == 0) ? 0.6f : 1.6f;
             CreatePlatform(new Vector2(x + 2f, py), new Vector2(4f, 0.4f));
 
-            // enemigo patrulla en el suelo
-            Spawn(patrol, new Vector3(x, -2f, 0f));
+            if (i < meleeCount) Spawn(melee, new Vector3(x, -2f, 0f));
 
-            // objetos: bueno arriba en la plataforma, malo en el suelo
             Spawn(good, new Vector3(x + 2f, py + 0.8f, 0f));
             if (i % 2 == 0) Spawn(bad, new Vector3(x + 5f, -2f, 0f));
         }
 
+        // enemigos a distancia sobre plataformas (pisos altos)
+        for (int j = 0; j < rangedCount; j++)
+        {
+            float rx = startX + 16f + j * (130f / Mathf.Max(1, rangedCount));
+            Spawn(ranged, new Vector3(rx, 1.8f, 0f));
+        }
+
         // puerta de salida al final
-        var d = Spawn(door, new Vector3(endX, -2f, 0f));
+        var d = Spawn(door, new Vector3(endX, -1.7f, 0f));
         var ld = d.GetComponent<LevelDoor>();
         ld.mode = LevelDoor.Mode.ExitToHub;
-        ld.floor = 1;
+        ld.floor = floor;
 
-        // HUD: barra de cortisol
         BuildStressUI(cortisol);
 
-        EditorSceneManager.SaveScene(scene, SceneDir + "/Level_01.unity");
+        EditorSceneManager.SaveScene(scene, SceneDir + $"/Level_{floor:00}.unity");
     }
 
     static void BuildStressUI(CortisolSystem cortisol)
@@ -506,10 +529,12 @@ public static class SceneBuilder
 
     static void SetBuildSettings()
     {
-        EditorBuildSettings.scenes = new[]
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>
         {
-            new EditorBuildSettingsScene(SceneDir + "/Hub.unity", true),
-            new EditorBuildSettingsScene(SceneDir + "/Level_01.unity", true),
+            new EditorBuildSettingsScene(SceneDir + "/Hub.unity", true)
         };
+        for (int f = 1; f <= 10; f++)
+            scenes.Add(new EditorBuildSettingsScene(SceneDir + $"/Level_{f:00}.unity", true));
+        EditorBuildSettings.scenes = scenes.ToArray();
     }
 }

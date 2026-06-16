@@ -26,13 +26,14 @@ public static class PixelArtGenerator
         // Fondo tipo cueva (aproximacion al estilo enviado).
         SaveSprite("bg_cave.png", CaveBg());
 
-        // Enemigos.
-        SaveSprite("enemy_patrol.png",  Box(16, 16, new Color32(20, 20, 20, 255)));   // caja negra
-        SaveSprite("enemy_chaser.png",  Circle(16, new Color32(200, 30, 30, 255)));    // circulo rojo
+        // Enemigos con diseno.
+        SaveSprite("enemy_patrol.png",  EnemyMelee());    // baboso melee
+        SaveSprite("enemy_chaser.png",  EnemyRanged());   // volador a distancia
+        SaveSprite("projectile.png",    Projectile());    // proyectil de estres
 
-        // Objetos.
-        SaveSprite("item_good.png",     Box(12, 16, new Color32(160, 200, 80, 255)));  // gameboy-ish
-        SaveSprite("item_bad.png",      Box(10, 18, new Color32(80, 160, 220, 255)));  // celular-ish
+        // Objetos con diseno.
+        SaveSprite("item_good.png",     ItemGood());       // gameboy (relax)
+        SaveSprite("item_bad.png",      ItemBad());        // celular (estres)
 
         // Mundo.
         SaveSprite("tile_grass.png",    Box(16, 16, new Color32(70, 150, 70, 255)));
@@ -185,6 +186,102 @@ public static class PixelArtGenerator
         return px;
     }
 
+    // Enemigo melee: baboso verde con ojos enojados (18x16).
+    static Color32[] EnemyMelee()
+    {
+        int w = 18, h = 16;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        var body = new Color32(96, 178, 96, 255);
+        var bodySh = new Color32(62, 132, 66, 255);
+        var eyeW = new Color32(250, 250, 250, 255);
+        var pupil = new Color32(40, 40, 50, 255);
+        var mouth = new Color32(40, 30, 30, 255);
+
+        Rect(px, w, 2, 1, 14, 3, body);   // base ancha
+        Rect(px, w, 3, 4, 12, 5, body);
+        Rect(px, w, 5, 9, 8, 3, body);    // cupula
+        Rect(px, w, 2, 1, 3, 10, bodySh); // sombra lateral izq
+        // ojos
+        Rect(px, w, 6, 6, 2, 2, eyeW); Rect(px, w, 6, 6, 1, 1, pupil);
+        Rect(px, w, 10, 6, 2, 2, eyeW); Rect(px, w, 11, 6, 1, 1, pupil);
+        // cejas enojadas
+        Rect(px, w, 6, 8, 2, 1, mouth); Rect(px, w, 10, 8, 2, 1, mouth);
+        // boca
+        Rect(px, w, 7, 3, 4, 1, mouth);
+        Outline(px, w, h);
+        return px;
+    }
+
+    // Enemigo a distancia: ojo volador morado con alas (18x16).
+    static Color32[] EnemyRanged()
+    {
+        int w = 18, h = 16;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        var body = new Color32(150, 90, 190, 255);
+        var bodySh = new Color32(110, 60, 150, 255);
+        var wing = new Color32(90, 50, 130, 255);
+        var eyeW = new Color32(250, 250, 250, 255);
+        var pupil = new Color32(180, 40, 60, 255);
+
+        // alas
+        Rect(px, w, 0, 7, 4, 4, wing); Rect(px, w, 14, 7, 4, 4, wing);
+        // cuerpo
+        Rect(px, w, 5, 4, 8, 8, body);
+        Rect(px, w, 6, 11, 6, 1, body);
+        Rect(px, w, 5, 4, 2, 8, bodySh);
+        // ojo grande
+        Rect(px, w, 7, 6, 4, 4, eyeW); Rect(px, w, 8, 7, 2, 2, pupil);
+        Outline(px, w, h);
+        return px;
+    }
+
+    // Proyectil de estres (8x8): orbe rojo-morado.
+    static Color32[] Projectile()
+    {
+        int d = 8;
+        var px = Circle(d, new Color32(200, 60, 80, 255));
+        // nucleo mas oscuro
+        Rect(px, d, 3, 3, 2, 2, new Color32(120, 30, 50, 255));
+        Outline(px, d, d);
+        return px;
+    }
+
+    // Item bueno: gameboy verde (relax) (14x18).
+    static Color32[] ItemGood()
+    {
+        int w = 14, h = 18;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        var shell = new Color32(170, 205, 120, 255);
+        var shellSh = new Color32(130, 165, 90, 255);
+        var screen = new Color32(120, 170, 110, 255);
+        var btn = new Color32(120, 70, 90, 255);
+
+        Rect(px, w, 2, 1, 10, 16, shell);
+        Rect(px, w, 2, 1, 2, 16, shellSh);
+        Rect(px, w, 4, 9, 6, 6, screen);   // pantalla
+        Rect(px, w, 4, 4, 2, 2, btn); Rect(px, w, 8, 4, 2, 2, btn); // botones
+        Outline(px, w, h);
+        return px;
+    }
+
+    // Item malo: celular con notificacion roja (12x18).
+    static Color32[] ItemBad()
+    {
+        int w = 12, h = 18;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        var shell = new Color32(70, 80, 95, 255);
+        var shellSh = new Color32(48, 56, 70, 255);
+        var screen = new Color32(150, 200, 230, 255);
+        var notif = new Color32(220, 60, 60, 255);
+
+        Rect(px, w, 2, 1, 8, 16, shell);
+        Rect(px, w, 2, 1, 2, 16, shellSh);
+        Rect(px, w, 3, 3, 6, 11, screen);  // pantalla
+        Rect(px, w, 7, 13, 2, 2, notif);   // notificacion
+        Outline(px, w, h);
+        return px;
+    }
+
     // Bosque metroidvania: troncos oscuros + claros de luz azul-verde + suelo.
     static Color32[] ForestBg()
     {
@@ -280,8 +377,11 @@ public static class PixelArtGenerator
             case "player_walk_a.png":
             case "player_walk_b.png":
             case "player_attack.png": return (16, 24);
-            case "item_good.png":     return (12, 16);
-            case "item_bad.png":      return (10, 18);
+            case "item_good.png":     return (14, 18);
+            case "item_bad.png":      return (12, 18);
+            case "enemy_patrol.png":
+            case "enemy_chaser.png":  return (18, 16);
+            case "projectile.png":    return (8, 8);
             case "bg_forest.png":     return (96, 54);
             case "bg_cave.png":       return (64, 36);
             case "p_torso.png":       return (14, 24);
