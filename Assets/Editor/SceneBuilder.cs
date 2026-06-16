@@ -224,9 +224,9 @@ public static class SceneBuilder
         var bgGo = new GameObject("Background");
         bgGo.transform.SetParent(go.transform);
         bgGo.transform.localPosition = new Vector3(0f, 0f, 20f);
-        bgGo.transform.localScale = new Vector3(7f, 7f, 1f);
+        bgGo.transform.localScale = new Vector3(4f, 4f, 1f);
         var bsr = bgGo.AddComponent<SpriteRenderer>();
-        bsr.sprite = S("bg_cave");
+        bsr.sprite = S("bg_forest");
         bsr.sortingOrder = -100;
 
         return cam;
@@ -261,6 +261,10 @@ public static class SceneBuilder
         // base ancha
         CreatePlatform(new Vector2(0f, -3.5f), new Vector2(20f, 1f));
 
+        // muros laterales del hub para no caerse de la base
+        CreatePlatform(new Vector2(-10f, 6f), new Vector2(1f, 24f));
+        CreatePlatform(new Vector2(10f, 6f), new Vector2(1f, 24f));
+
         // torre: 10 plataformas en zigzag, separadas para que el salto se sienta amplio
         for (int i = 0; i < 10; i++)
         {
@@ -289,6 +293,10 @@ public static class SceneBuilder
 
         // suelo muy largo
         CreatePlatform(new Vector2(0f, -3f), new Vector2(170f, 1f));
+
+        // muros en ambos extremos para que el personaje no se caiga
+        CreatePlatform(new Vector2(startX - 1.5f, 1.5f), new Vector2(1.5f, 16f));
+        CreatePlatform(new Vector2(endX + 1.5f, 1.5f), new Vector2(1.5f, 16f));
 
         // contenido repartido a lo ancho de forma deterministica
         for (int i = 0; i < 14; i++)

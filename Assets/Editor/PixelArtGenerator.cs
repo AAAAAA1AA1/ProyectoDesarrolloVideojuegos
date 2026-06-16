@@ -37,7 +37,7 @@ public static class PixelArtGenerator
         // Mundo.
         SaveSprite("tile_grass.png",    Box(16, 16, new Color32(70, 150, 70, 255)));
         SaveSprite("tile_dirt.png",     Box(16, 16, new Color32(90, 60, 50, 255)));
-        SaveSprite("bg_forest.png",     Box(64, 36, new Color32(110, 170, 110, 255)));
+        SaveSprite("bg_forest.png",     ForestBg());
         SaveSprite("door.png",          Box(20, 32, new Color32(120, 80, 40, 255)));
 
         AssetDatabase.Refresh();
@@ -87,10 +87,10 @@ public static class PixelArtGenerator
         return px;
     }
 
-    // Torso con cabeza y cara (12x18). Sin brazos ni piernas (van aparte).
+    // Torso con cabeza y cara (12x20). Cabeza mas arriba. Sin brazos ni piernas.
     static Color32[] Torso()
     {
-        int w = 12, h = 18;
+        int w = 12, h = 20;
         var px = Fill(w, h, new Color32(0, 0, 0, 0));
         var skin = new Color32(220, 170, 120, 255);
         var hair = new Color32(90, 60, 30, 255);
@@ -98,12 +98,13 @@ public static class PixelArtGenerator
         var eyeB = new Color32(30, 30, 40, 255);
         var mouth = new Color32(150, 70, 70, 255);
 
-        Rect(px, w, 3, 11, 6, 5, skin);   // cabeza
-        Rect(px, w, 3, 15, 6, 2, hair);   // pelo
-        Rect(px, w, 4, 13, 1, 1, eyeB);   // ojo izq
-        Rect(px, w, 7, 13, 1, 1, eyeB);   // ojo der
-        Rect(px, w, 5, 11, 2, 1, mouth);  // boca
-        Rect(px, w, 2, 1, 8, 10, shirt);  // torso
+        Rect(px, w, 2, 1, 8, 12, shirt);  // torso (cuerpo)
+        Rect(px, w, 5, 12, 2, 2, skin);   // cuello
+        Rect(px, w, 3, 13, 6, 5, skin);   // cabeza (mas arriba)
+        Rect(px, w, 3, 17, 6, 2, hair);   // pelo
+        Rect(px, w, 4, 15, 1, 1, eyeB);   // ojo izq
+        Rect(px, w, 7, 15, 1, 1, eyeB);   // ojo der
+        Rect(px, w, 5, 13, 2, 1, mouth);  // boca
         return px;
     }
 
@@ -123,6 +124,30 @@ public static class PixelArtGenerator
         var px = Fill(w, h, new Color32(0, 0, 0, 0));
         Rect(px, w, 0, 1, 3, 2, new Color32(110, 80, 50, 255));   // mango
         Rect(px, w, 3, 1, 9, 2, new Color32(210, 210, 225, 255)); // hoja
+        return px;
+    }
+
+    // Bosque metroidvania: troncos oscuros + claros de luz azul-verde + suelo.
+    static Color32[] ForestBg()
+    {
+        int w = 96, h = 54;
+        var px = Fill(w, h, new Color32(26, 56, 46, 255)); // verde muy oscuro
+        // claros de luz (bandas verticales azul-verde)
+        int[] gaps = { 14, 40, 66, 86 };
+        foreach (int gx in gaps)
+        {
+            Rect(px, w, gx, 12, 7, 40, new Color32(90, 165, 160, 255));
+            Rect(px, w, gx + 1, 12, 5, 40, new Color32(120, 200, 195, 255));
+        }
+        // troncos de arbol oscuros
+        int[] trunks = { 4, 26, 52, 76 };
+        foreach (int tx in trunks)
+            Rect(px, w, tx, 10, 6, 44, new Color32(18, 40, 34, 255));
+        // copa/canopy arriba
+        Rect(px, w, 0, 46, w, 8, new Color32(22, 50, 38, 255));
+        // pasto y tierra
+        Rect(px, w, 0, 8, w, 4, new Color32(70, 150, 70, 255));
+        Rect(px, w, 0, 0, w, 8, new Color32(115, 72, 45, 255));
         return px;
     }
 
@@ -199,9 +224,9 @@ public static class PixelArtGenerator
             case "player_attack.png": return (16, 24);
             case "item_good.png":     return (12, 16);
             case "item_bad.png":      return (10, 18);
-            case "bg_forest.png":     return (64, 36);
+            case "bg_forest.png":     return (96, 54);
             case "bg_cave.png":       return (64, 36);
-            case "p_torso.png":       return (12, 18);
+            case "p_torso.png":       return (12, 20);
             case "p_arm.png":         return (3, 8);
             case "p_leg.png":         return (4, 9);
             case "p_sword.png":       return (12, 4);
