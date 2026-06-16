@@ -19,8 +19,8 @@ public static class PixelArtGenerator
 
         // Partes articuladas (personaje con huesos: torso+cabeza, brazo, pierna, espada).
         SaveSprite("p_torso.png", Torso());
-        SaveSprite("p_arm.png",   Limb(3, 8, new Color32(70, 120, 70, 255), new Color32(220, 170, 120, 255)));
-        SaveSprite("p_leg.png",   Limb(4, 9, new Color32(80, 60, 40, 255), new Color32(50, 40, 30, 255)));
+        SaveSprite("p_arm.png",   ArmSprite());
+        SaveSprite("p_leg.png",   LegSprite());
         SaveSprite("p_sword.png", Sword());
 
         // Fondo tipo cueva (aproximacion al estilo enviado).
@@ -87,43 +87,101 @@ public static class PixelArtGenerator
         return px;
     }
 
-    // Torso con cabeza y cara (12x20). Cabeza mas arriba. Sin brazos ni piernas.
+    static readonly Color32 OL = new Color32(28, 22, 34, 255);   // contorno
+    static readonly Color32 Skin = new Color32(238, 194, 150, 255);
+    static readonly Color32 SkinSh = new Color32(205, 160, 120, 255);
+    static readonly Color32 Hair = new Color32(120, 76, 40, 255);
+    static readonly Color32 HairSh = new Color32(88, 54, 28, 255);
+    static readonly Color32 Shirt = new Color32(64, 150, 98, 255);
+    static readonly Color32 ShirtSh = new Color32(44, 110, 70, 255);
+    static readonly Color32 Pants = new Color32(82, 62, 42, 255);
+    static readonly Color32 PantsSh = new Color32(60, 44, 30, 255);
+    static readonly Color32 Boot = new Color32(44, 34, 30, 255);
+
+    // anade contorno oscuro alrededor de la silueta (pixeles transparentes vecinos)
+    static void Outline(Color32[] px, int w, int h)
+    {
+        var copy = (Color32[])px.Clone();
+        for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+        {
+            if (copy[y * w + x].a != 0) continue;
+            bool near = false;
+            for (int dy = -1; dy <= 1 && !near; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                int nx = x + dx, ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                if (copy[ny * w + nx].a != 0) { near = true; break; }
+            }
+            if (near) px[y * w + x] = OL;
+        }
+    }
+
+    // Torso con cabeza y cara bonita (14x24). Sin brazos ni piernas.
     static Color32[] Torso()
     {
-        int w = 12, h = 20;
+        int w = 14, h = 24;
         var px = Fill(w, h, new Color32(0, 0, 0, 0));
-        var skin = new Color32(220, 170, 120, 255);
-        var hair = new Color32(90, 60, 30, 255);
-        var shirt = new Color32(70, 120, 70, 255);
-        var eyeB = new Color32(30, 30, 40, 255);
-        var mouth = new Color32(150, 70, 70, 255);
+        var eyeW = new Color32(250, 250, 252, 255);
+        var pupil = new Color32(50, 55, 80, 255);
+        var mouth = new Color32(180, 90, 90, 255);
+        var belt = new Color32(95, 62, 38, 255);
 
-        Rect(px, w, 2, 1, 8, 12, shirt);  // torso (cuerpo)
-        Rect(px, w, 5, 12, 2, 2, skin);   // cuello
-        Rect(px, w, 3, 13, 6, 5, skin);   // cabeza (mas arriba)
-        Rect(px, w, 3, 17, 6, 2, hair);   // pelo
-        Rect(px, w, 4, 15, 1, 1, eyeB);   // ojo izq
-        Rect(px, w, 7, 15, 1, 1, eyeB);   // ojo der
-        Rect(px, w, 5, 13, 2, 1, mouth);  // boca
+        // torso con sombreado
+        Rect(px, w, 3, 3, 8, 11, Shirt);
+        Rect(px, w, 3, 3, 2, 11, ShirtSh);   // sombra lateral
+        Rect(px, w, 3, 3, 8, 2, belt);       // cinturon
+        // cuello
+        Rect(px, w, 6, 14, 2, 2, Skin);
+        // cabeza
+        Rect(px, w, 4, 16, 6, 6, Skin);
+        Rect(px, w, 9, 16, 1, 6, SkinSh);    // sombra mejilla
+        // pelo
+        Rect(px, w, 4, 21, 6, 2, Hair);
+        Rect(px, w, 3, 18, 1, 4, Hair);
+        Rect(px, w, 10, 18, 1, 4, HairSh);
+        // cara
+        Rect(px, w, 5, 18, 1, 2, eyeW); Rect(px, w, 5, 18, 1, 1, pupil); // ojo izq
+        Rect(px, w, 8, 18, 1, 2, eyeW); Rect(px, w, 8, 18, 1, 1, pupil); // ojo der
+        Rect(px, w, 6, 17, 2, 1, mouth);                                 // sonrisa
+
+        Outline(px, w, h);
         return px;
     }
 
-    // Miembro vertical: parte alta de tela, parte baja "mano/pie".
-    static Color32[] Limb(int w, int h, Color32 top, Color32 tip)
+    static Color32[] ArmSprite()
     {
-        var px = Fill(w, h, top);
-        for (int y = 0; y < 2; y++)
-        for (int x = 0; x < w; x++)
-            px[y * w + x] = tip;
+        int w = 5, h = 11;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        Rect(px, w, 1, 3, 3, 8, Shirt);    // manga
+        Rect(px, w, 1, 3, 1, 8, ShirtSh);  // sombra
+        Rect(px, w, 1, 1, 3, 2, Skin);     // mano
+        Outline(px, w, h);
+        return px;
+    }
+
+    static Color32[] LegSprite()
+    {
+        int w = 6, h = 12;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        Rect(px, w, 1, 3, 4, 9, Pants);    // pantalon
+        Rect(px, w, 1, 3, 1, 9, PantsSh);  // sombra
+        Rect(px, w, 1, 1, 4, 3, Boot);     // bota
+        Outline(px, w, h);
         return px;
     }
 
     static Color32[] Sword()
     {
-        int w = 12, h = 4;
+        int w = 13, h = 5;
         var px = Fill(w, h, new Color32(0, 0, 0, 0));
-        Rect(px, w, 0, 1, 3, 2, new Color32(110, 80, 50, 255));   // mango
-        Rect(px, w, 3, 1, 9, 2, new Color32(210, 210, 225, 255)); // hoja
+        Rect(px, w, 1, 1, 2, 3, new Color32(110, 80, 50, 255));   // mango
+        Rect(px, w, 3, 2, 1, 1, new Color32(190, 170, 70, 255));  // guarda
+        Rect(px, w, 4, 1, 8, 3, new Color32(220, 220, 235, 255)); // hoja
+        Rect(px, w, 4, 2, 8, 1, new Color32(170, 175, 195, 255)); // filo sombreado
+        Outline(px, w, h);
         return px;
     }
 
@@ -226,10 +284,10 @@ public static class PixelArtGenerator
             case "item_bad.png":      return (10, 18);
             case "bg_forest.png":     return (96, 54);
             case "bg_cave.png":       return (64, 36);
-            case "p_torso.png":       return (12, 20);
-            case "p_arm.png":         return (3, 8);
-            case "p_leg.png":         return (4, 9);
-            case "p_sword.png":       return (12, 4);
+            case "p_torso.png":       return (14, 24);
+            case "p_arm.png":         return (5, 11);
+            case "p_leg.png":         return (6, 12);
+            case "p_sword.png":       return (13, 5);
             case "door.png":          return (20, 32);
             default:                  return (16, 16);
         }

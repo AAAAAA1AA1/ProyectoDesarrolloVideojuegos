@@ -158,12 +158,12 @@ public static class SceneBuilder
         rb.freezeRotation = true;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         var col = go.AddComponent<CapsuleCollider2D>();
-        col.size = new Vector2(0.7f, 1.6f);
-        col.offset = new Vector2(0f, -0.05f);
+        col.size = new Vector2(0.85f, 2.0f);
+        col.offset = new Vector2(0f, -0.3f);
 
         // miembros (detras del torso)
-        MakeLimb("LegBack",  go.transform, new Vector3(0.1f, -0.15f, 0f), "p_leg", 8, out _);
-        MakeLimb("ArmBack",  go.transform, new Vector3(0.18f, 0.45f, 0f), "p_arm", 8, out _);
+        MakeLimb("LegBack",  go.transform, new Vector3(0.12f, -0.5f, 0f), "p_leg", 8, out _);
+        MakeLimb("ArmBack",  go.transform, new Vector3(0.22f, 0.06f, 0f), "p_arm", 8, out _);
         var legBack = go.transform.Find("LegBack");
         var armBack = go.transform.Find("ArmBack");
 
@@ -175,19 +175,19 @@ public static class SceneBuilder
         tsr.sprite = S("p_torso"); tsr.sortingOrder = 10;
 
         // miembros frontales (delante del torso)
-        var legFront = MakeLimb("LegFront", go.transform, new Vector3(-0.1f, -0.15f, 0f), "p_leg", 12, out _);
+        var legFront = MakeLimb("LegFront", go.transform, new Vector3(-0.12f, -0.5f, 0f), "p_leg", 12, out _);
         Transform armFrontSprite;
-        var armFront = MakeLimb("ArmFront", go.transform, new Vector3(-0.18f, 0.45f, 0f), "p_arm", 12, out armFrontSprite);
+        var armFront = MakeLimb("ArmFront", go.transform, new Vector3(-0.22f, 0.06f, 0f), "p_arm", 12, out armFrontSprite);
 
         // espada en la mano del brazo frontal (oculta hasta atacar)
         var swordGo = new GameObject("Sword");
         swordGo.transform.SetParent(armFront);
-        swordGo.transform.localPosition = new Vector3(0f, -0.55f, 0f);
+        swordGo.transform.localPosition = new Vector3(0f, -0.7f, 0f);
         swordGo.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
         var swsr = swordGo.AddComponent<SpriteRenderer>();
         swsr.sprite = S("p_sword"); swsr.sortingOrder = 13;
 
-        var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(0f, -0.8f, 0f);
+        var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(0f, -1.2f, 0f);
         var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.6f, 0f, 0f);
 
         var pc = go.AddComponent<PlayerController2D>();
@@ -339,7 +339,7 @@ public static class SceneBuilder
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        var pl = Spawn(player, new Vector3(0f, -2.2f, 0f));
+        var pl = Spawn(player, new Vector3(0f, -1.7f, 0f));
         CreateCamera(new Color(0.30f, 0.30f, 0.40f), pl.transform);
 
         // base ancha
@@ -371,7 +371,7 @@ public static class SceneBuilder
         const float startX = -75f;
         const float endX = 75f;
 
-        var pl = Spawn(player, new Vector3(startX, -1.5f, 0f));
+        var pl = Spawn(player, new Vector3(startX, -1.25f, 0f));
         CreateCamera(new Color(0.18f, 0.30f, 0.34f), pl.transform);
         var cortisol = pl.GetComponent<CortisolSystem>();
 
