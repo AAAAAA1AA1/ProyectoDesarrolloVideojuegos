@@ -12,6 +12,10 @@ public static class SceneBuilder
     const string PrefabDir = "Assets/Prefabs";
     const string SceneDir = "Assets/Scenes";
 
+    static Sprite _groundSprite;   // suelo del usuario o tile generado
+    static bool _groundTiled;      // true si usamos sprite del usuario (drawMode Tiled)
+    static Sprite _bgSprite;       // fondo del usuario o bosque generado
+
     [MenuItem("Juego Mental/Build Scenes")]
     public static void BuildAll()
     {
@@ -20,6 +24,11 @@ public static class SceneBuilder
         EnsureLayer("Enemy");
         EnsureWhiteBar();
         AssetDatabase.Refresh();
+
+        // arte del usuario (si existe) tiene prioridad
+        _groundTiled = TryImportUser("suelo", true, out _groundSprite);
+        if (!_groundTiled) _groundSprite = S("tile_grass");
+        if (!TryImportUser("fondo", false, out _bgSprite)) _bgSprite = S("bg_forest");
 
         Directory.CreateDirectory(PrefabDir);
         Directory.CreateDirectory(SceneDir);
@@ -42,6 +51,41 @@ public static class SceneBuilder
     // ---------- helpers ----------
 
     static Sprite S(string n) => AssetDatabase.LoadAssetAtPath<Sprite>(Art + n + ".png");
+
+    // carga un PNG/JPG del usuario en Assets/Art/<base>.* y lo importa como Sprite
+    static bool TryImportUser(string baseName, bool tile, out Sprite sprite)
+    {
+        sprite = null;
+        string[] exts = { ".png", ".jpg", ".jpeg" };
+        foreach (var e in exts)
+        {
+            string p = "Assets/Art/" + baseName + e;
+            if (!File.Exists(p)) continue;
+            var ti = AssetImporter.GetAtPath(p) as TextureImporter;
+            if (ti == null) continue;
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.filterMode = FilterMode.Bilinear;
+            if (tile)
+            {
+                ti.wrapMode = TextureWrapMode.Repeat;
+                var s = new TextureImporterSettings();
+                ti.ReadTextureSettings(s);
+                s.spriteMeshType = SpriteMeshType.FullRect;
+                ti.SetTextureSettings(s);
+            }
+            ti.SaveAndReimport();
+            if (tile)
+            {
+                // PPU = alto de la textura => cada tile mide ~1 unidad de alto
+                var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(p);
+                if (tex != null) { ti.spritePixelsPerUnit = tex.height; ti.SaveAndReimport(); }
+            }
+            sprite = AssetDatabase.LoadAssetAtPath<Sprite>(p);
+            return sprite != null;
+        }
+        return false;
+    }
 
     static void EnsureLayer(string name)
     {
@@ -224,10 +268,13 @@ public static class SceneBuilder
         var bgGo = new GameObject("Background");
         bgGo.transform.SetParent(go.transform);
         bgGo.transform.localPosition = new Vector3(0f, 0f, 20f);
-        bgGo.transform.localScale = new Vector3(4f, 4f, 1f);
         var bsr = bgGo.AddComponent<SpriteRenderer>();
-        bsr.sprite = S("bg_forest");
+        bsr.sprite = _bgSprite;
         bsr.sortingOrder = -100;
+        // escala uniforme para cubrir la vista de la camara conservando proporcion
+        Vector2 b = _bgSprite.bounds.size;
+        float sc = Mathf.Max(21.5f / b.x, 12.5f / b.y) * 1.05f;
+        bgGo.transform.localScale = new Vector3(sc, sc, 1f);
 
         return cam;
     }
@@ -235,10 +282,20 @@ public static class SceneBuilder
     static GameObject CreatePlatform(Vector2 pos, Vector2 size)
     {
         var go = new GameObject("Platform") { layer = LayerMask.NameToLayer("Ground") };
-        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = S("tile_grass"); sr.sortingOrder = 1;
+        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _groundSprite; sr.sortingOrder = 1;
         go.transform.position = pos;
-        go.transform.localScale = new Vector3(size.x, size.y, 1f);
-        go.AddComponent<BoxCollider2D>(); // hereda bounds del sprite (1u) * escala = size
+
+        if (_groundTiled)
+        {
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.size = size;                       // repite la textura del usuario
+            var c = go.AddComponent<BoxCollider2D>(); c.size = size;
+        }
+        else
+        {
+            go.transform.localScale = new Vector3(size.x, size.y, 1f);
+            go.AddComponent<BoxCollider2D>();     // bounds del sprite (1u) * escala
+        }
         return go;
     }
 
