@@ -11,10 +11,11 @@ public static class PixelArtGenerator
     {
         Directory.CreateDirectory(Dir);
 
-        // Personaje (humanoide simple, 16x24). Frames idle/walk/attack.
-        SaveSprite("player_idle.png",   Player(false, false));
-        SaveSprite("player_walk.png",   Player(true,  false));
-        SaveSprite("player_attack.png", Player(false, true));
+        // Personaje (humanoide simple, 16x24). Frames idle / caminar A-B / ataque.
+        SaveSprite("player_idle.png",     Player(0, false));
+        SaveSprite("player_walk_a.png",   Player(1, false));
+        SaveSprite("player_walk_b.png",   Player(2, false));
+        SaveSprite("player_attack.png",   Player(0, true));
 
         // Enemigos.
         SaveSprite("enemy_patrol.png",  Box(16, 16, new Color32(20, 20, 20, 255)));   // caja negra
@@ -34,18 +35,45 @@ public static class PixelArtGenerator
         Debug.Log("Pixel art generado en " + Dir);
     }
 
-    static Color32[] Player(bool stride, bool attack)
+    // legPose: 0 = quieto, 1 = paso A (pierna der adelante), 2 = paso B (pierna izq adelante)
+    static Color32[] Player(int legPose, bool attack)
     {
         int w = 16, h = 24;
         var px = Fill(w, h, new Color32(0, 0, 0, 0));
         var skin = new Color32(220, 170, 120, 255);
+        var hair = new Color32(90, 60, 30, 255);
         var shirt = new Color32(70, 120, 70, 255);
         var pants = new Color32(80, 60, 40, 255);
-        Rect(px, w, 5, 16, 6, 4, skin);                  // cabeza
-        Rect(px, w, 4, 9,  8, 7, shirt);                 // torso
-        Rect(px, w, 4, 3,  3, 6, pants);                 // pierna izq
-        Rect(px, w, 9, 3,  3, 6, pants);                 // pierna der
-        if (stride) Rect(px, w, 9, 1, 3, 2, pants);      // paso
+        var eyeW = new Color32(245, 245, 245, 255);
+        var eyeB = new Color32(30, 30, 40, 255);
+        var mouth = new Color32(150, 70, 70, 255);
+
+        Rect(px, w, 5, 15, 6, 5, skin);                  // cabeza
+        Rect(px, w, 5, 19, 6, 2, hair);                  // pelo
+        // cara
+        Rect(px, w, 6, 17, 1, 1, eyeW); Rect(px, w, 6, 17, 1, 1, eyeB); // ojo izq
+        Rect(px, w, 9, 17, 1, 1, eyeB);                  // ojo der
+        Rect(px, w, 7, 15, 2, 1, mouth);                 // boca
+
+        Rect(px, w, 4, 9, 8, 6, shirt);                  // torso
+
+        // piernas segun pose
+        if (legPose == 1)
+        {
+            Rect(px, w, 4, 3, 3, 6, pants);              // izq atras
+            Rect(px, w, 9, 4, 3, 5, pants);              // der adelante (levantada)
+        }
+        else if (legPose == 2)
+        {
+            Rect(px, w, 4, 4, 3, 5, pants);              // izq adelante
+            Rect(px, w, 9, 3, 3, 6, pants);              // der atras
+        }
+        else
+        {
+            Rect(px, w, 4, 3, 3, 6, pants);
+            Rect(px, w, 9, 3, 3, 6, pants);
+        }
+
         if (attack) Rect(px, w, 12, 10, 4, 2, new Color32(200, 200, 210, 255)); // espada
         return px;
     }
@@ -100,7 +128,8 @@ public static class PixelArtGenerator
         switch (name)
         {
             case "player_idle.png":
-            case "player_walk.png":
+            case "player_walk_a.png":
+            case "player_walk_b.png":
             case "player_attack.png": return (16, 24);
             case "item_good.png":     return (12, 16);
             case "item_bad.png":      return (10, 18);

@@ -97,6 +97,14 @@ public static class SceneBuilder
         var pc = go.AddComponent<PlayerController2D>();
         pc.groundCheck = gc.transform;
         pc.groundMask = Mask("Ground");
+        pc.moveSpeed = 6f;
+        pc.jumpForce = 12f;
+
+        var anim = go.AddComponent<PlayerAnimator>();
+        anim.idle = S("player_idle");
+        anim.walkA = S("player_walk_a");
+        anim.walkB = S("player_walk_b");
+        anim.attack = S("player_attack");
 
         var pa = go.AddComponent<PlayerAttack>();
         pa.enemyMask = Mask("Enemy");
@@ -166,6 +174,16 @@ public static class SceneBuilder
         go.AddComponent<AudioListener>();
         var cf = go.AddComponent<CameraFollow>();
         cf.target = follow;
+
+        // fondo que sigue la camara (siempre cubre la vista)
+        var bgGo = new GameObject("Background");
+        bgGo.transform.SetParent(go.transform);
+        bgGo.transform.localPosition = new Vector3(0f, 0f, 20f);
+        bgGo.transform.localScale = new Vector3(7f, 7f, 1f);
+        var bsr = bgGo.AddComponent<SpriteRenderer>();
+        bsr.sprite = S("bg_forest");
+        bsr.sortingOrder = -100;
+
         return cam;
     }
 
@@ -195,16 +213,16 @@ public static class SceneBuilder
         var pl = Spawn(player, new Vector3(0f, -2.2f, 0f));
         CreateCamera(new Color(0.30f, 0.30f, 0.40f), pl.transform);
 
-        // base
-        CreatePlatform(new Vector2(0f, -3.5f), new Vector2(14f, 1f));
+        // base ancha
+        CreatePlatform(new Vector2(0f, -3.5f), new Vector2(20f, 1f));
 
-        // torre: 10 plataformas en zigzag, alcanzables saltando, con una puerta cada una
+        // torre: 10 plataformas en zigzag, separadas para que el salto se sienta amplio
         for (int i = 0; i < 10; i++)
         {
-            float y = -2.4f + (i + 1) * 1.2f;
-            float x = (i % 2 == 0) ? -2.2f : 2.2f;
-            CreatePlatform(new Vector2(x, y - 0.6f), new Vector2(3.5f, 0.4f));
-            var d = Spawn(door, new Vector3(x, y + 0.4f, 0f));
+            float y = -2.2f + (i + 1) * 1.9f;
+            float x = (i % 2 == 0) ? -3.5f : 3.5f;
+            CreatePlatform(new Vector2(x, y - 0.7f), new Vector2(5f, 0.5f));
+            var d = Spawn(door, new Vector3(x, y + 0.35f, 0f));
             var ld = d.GetComponent<LevelDoor>();
             ld.mode = LevelDoor.Mode.EnterLevel;
             ld.floor = i + 1;
@@ -217,34 +235,35 @@ public static class SceneBuilder
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        var pl = Spawn(player, new Vector3(-8f, -1.5f, 0f));
+        var pl = Spawn(player, new Vector3(-26f, -1.5f, 0f));
         CreateCamera(new Color(0.43f, 0.66f, 0.43f), pl.transform);
         var cortisol = pl.GetComponent<CortisolSystem>();
 
-        // fondo
-        var bg = new GameObject("Background");
-        var bsr = bg.AddComponent<SpriteRenderer>(); bsr.sprite = S("bg_forest"); bsr.sortingOrder = -10;
-        bg.transform.position = new Vector3(0f, 0f, 0f);
-        bg.transform.localScale = new Vector3(7f, 7f, 1f);
+        // suelo largo (nivel ancho)
+        CreatePlatform(new Vector2(0f, -3f), new Vector2(70f, 1f));
+        // plataformas repartidas a lo ancho
+        CreatePlatform(new Vector2(-14f, 0f), new Vector2(4f, 0.4f));
+        CreatePlatform(new Vector2(-6f, 1.2f), new Vector2(4f, 0.4f));
+        CreatePlatform(new Vector2(4f, 0.6f), new Vector2(4f, 0.4f));
+        CreatePlatform(new Vector2(14f, 1.4f), new Vector2(4f, 0.4f));
 
-        // suelo largo
-        CreatePlatform(new Vector2(0f, -3f), new Vector2(40f, 1f));
-        // un par de plataformas
-        CreatePlatform(new Vector2(0f, 0f), new Vector2(3f, 0.4f));
-        CreatePlatform(new Vector2(5f, 1.2f), new Vector2(3f, 0.4f));
+        // enemigos repartidos
+        Spawn(patrol, new Vector3(-18f, -2f, 0f));
+        Spawn(patrol, new Vector3(-2f, -2f, 0f));
+        Spawn(patrol, new Vector3(12f, -2f, 0f));
+        Spawn(patrol, new Vector3(22f, -2f, 0f));
 
-        // enemigos
-        Spawn(patrol, new Vector3(0f, -2f, 0f));
-        Spawn(patrol, new Vector3(6f, -2f, 0f));
+        // objetos buenos y malos repartidos
+        Spawn(good, new Vector3(-20f, -2f, 0f));
+        Spawn(good, new Vector3(-6f, 1.9f, 0f));
+        Spawn(good, new Vector3(8f, -2f, 0f));
+        Spawn(good, new Vector3(14f, 2.1f, 0f));
+        Spawn(bad, new Vector3(-10f, -2f, 0f));
+        Spawn(bad, new Vector3(2f, -2f, 0f));
+        Spawn(bad, new Vector3(18f, -2f, 0f));
 
-        // objetos
-        Spawn(good, new Vector3(-4f, -2f, 0f));
-        Spawn(good, new Vector3(3f, 0.8f, 0f));
-        Spawn(bad, new Vector3(1f, -2f, 0f));
-        Spawn(bad, new Vector3(7f, -2f, 0f));
-
-        // puerta de salida
-        var d = Spawn(door, new Vector3(10f, -2f, 0f));
+        // puerta de salida al final
+        var d = Spawn(door, new Vector3(30f, -2f, 0f));
         var ld = d.GetComponent<LevelDoor>();
         ld.mode = LevelDoor.Mode.ExitToHub;
         ld.floor = 1;
@@ -261,7 +280,7 @@ public static class SceneBuilder
         var canvas = canvasGo.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem),
                 typeof(UnityEngine.EventSystems.StandaloneInputModule));
 

@@ -12,14 +12,20 @@ namespace JuegoMental
 
         float _next;
         SpriteRenderer _sr;
+        PlayerAnimator _anim;
 
-        void Awake() => _sr = GetComponent<SpriteRenderer>();
+        void Awake()
+        {
+            _sr = GetComponent<SpriteRenderer>();
+            _anim = GetComponent<PlayerAnimator>();
+        }
 
         void Update()
         {
             if ((Input.GetKeyDown(KeyCode.J) || Input.GetMouseButtonDown(0)) && Time.time >= _next)
             {
                 _next = Time.time + cooldown;
+                if (_anim != null) _anim.TriggerAttack();
                 DoAttack();
             }
         }
