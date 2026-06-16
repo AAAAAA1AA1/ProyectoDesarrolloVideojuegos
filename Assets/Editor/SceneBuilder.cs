@@ -15,6 +15,9 @@ public static class SceneBuilder
     static Sprite _groundSprite;   // suelo del usuario o tile generado
     static bool _groundTiled;      // true si usamos sprite del usuario (drawMode Tiled)
     static Sprite _bgSprite;       // fondo del usuario o bosque generado
+    static Sprite _wallSprite;     // pared del usuario o suelo de respaldo
+    static bool _wallTiled;
+    static Sprite _doorSprite;     // puerta del usuario o generada
 
     [MenuItem("Juego Mental/Build Scenes")]
     public static void BuildAll()
@@ -29,6 +32,9 @@ public static class SceneBuilder
         _groundTiled = TryImportUser("suelo", true, out _groundSprite);
         if (!_groundTiled) _groundSprite = S("tile_grass");
         if (!TryImportUser("fondo", false, out _bgSprite)) _bgSprite = S("bg_forest");
+        _wallTiled = TryImportUser("pared", true, out _wallSprite);
+        if (!_wallTiled) _wallSprite = _groundSprite;
+        if (!TryImportUser("puerta", false, out _doorSprite, 2.6f)) _doorSprite = S("door");
 
         Directory.CreateDirectory(PrefabDir);
         Directory.CreateDirectory(SceneDir);
@@ -53,7 +59,7 @@ public static class SceneBuilder
     static Sprite S(string n) => AssetDatabase.LoadAssetAtPath<Sprite>(Art + n + ".png");
 
     // carga un PNG/JPG del usuario en Assets/Art/<base>.* y lo importa como Sprite
-    static bool TryImportUser(string baseName, bool tile, out Sprite sprite)
+    static bool TryImportUser(string baseName, bool tile, out Sprite sprite, float targetHeight = 0f)
     {
         sprite = null;
         string[] exts = { ".png", ".jpg", ".jpeg" };
@@ -75,11 +81,12 @@ public static class SceneBuilder
                 ti.SetTextureSettings(s);
             }
             ti.SaveAndReimport();
-            if (tile)
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(p);
+            if (tex != null)
             {
-                // PPU = alto de la textura => cada tile mide ~1 unidad de alto
-                var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(p);
-                if (tex != null) { ti.spritePixelsPerUnit = tex.height; ti.SaveAndReimport(); }
+                if (tile) ti.spritePixelsPerUnit = tex.height;            // tile ~1 unidad de alto
+                else if (targetHeight > 0f) ti.spritePixelsPerUnit = tex.height / targetHeight;
+                ti.SaveAndReimport();
             }
             sprite = AssetDatabase.LoadAssetAtPath<Sprite>(p);
             return sprite != null;
@@ -241,8 +248,9 @@ public static class SceneBuilder
     static GameObject BuildDoorPrefab()
     {
         var go = new GameObject("Door");
-        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = S("door"); sr.sortingOrder = 3;
-        var col = go.AddComponent<BoxCollider2D>(); col.isTrigger = true; col.size = new Vector2(1.25f, 2f);
+        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _doorSprite; sr.sortingOrder = 3;
+        var col = go.AddComponent<BoxCollider2D>(); col.isTrigger = true;
+        col.size = _doorSprite.bounds.size; // ajusta al tamano de la puerta
         go.AddComponent<LevelDoor>();
         var prefab = PrefabUtility.SaveAsPrefabAsset(go, PrefabDir + "/Door.prefab");
         Object.DestroyImmediate(go);
@@ -299,6 +307,25 @@ public static class SceneBuilder
         return go;
     }
 
+    static GameObject CreateWall(Vector2 pos, Vector2 size)
+    {
+        var go = new GameObject("Wall") { layer = LayerMask.NameToLayer("Ground") };
+        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = _wallSprite; sr.sortingOrder = 2;
+        go.transform.position = pos;
+        if (_wallTiled)
+        {
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.size = size;
+            var c = go.AddComponent<BoxCollider2D>(); c.size = size;
+        }
+        else
+        {
+            go.transform.localScale = new Vector3(size.x, size.y, 1f);
+            go.AddComponent<BoxCollider2D>();
+        }
+        return go;
+    }
+
     static GameObject Spawn(GameObject prefab, Vector3 pos)
     {
         var inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
@@ -319,8 +346,8 @@ public static class SceneBuilder
         CreatePlatform(new Vector2(0f, -3.5f), new Vector2(20f, 1f));
 
         // muros laterales del hub para no caerse de la base
-        CreatePlatform(new Vector2(-10f, 6f), new Vector2(1f, 24f));
-        CreatePlatform(new Vector2(10f, 6f), new Vector2(1f, 24f));
+        CreateWall(new Vector2(-10f, 6f), new Vector2(1f, 24f));
+        CreateWall(new Vector2(10f, 6f), new Vector2(1f, 24f));
 
         // torre: 10 plataformas en zigzag, separadas para que el salto se sienta amplio
         for (int i = 0; i < 10; i++)
@@ -352,8 +379,8 @@ public static class SceneBuilder
         CreatePlatform(new Vector2(0f, -3f), new Vector2(170f, 1f));
 
         // muros en ambos extremos para que el personaje no se caiga
-        CreatePlatform(new Vector2(startX - 1.5f, 1.5f), new Vector2(1.5f, 16f));
-        CreatePlatform(new Vector2(endX + 1.5f, 1.5f), new Vector2(1.5f, 16f));
+        CreateWall(new Vector2(startX - 1.5f, 1.5f), new Vector2(1.5f, 16f));
+        CreateWall(new Vector2(endX + 1.5f, 1.5f), new Vector2(1.5f, 16f));
 
         // contenido repartido a lo ancho de forma deterministica
         for (int i = 0; i < 14; i++)
