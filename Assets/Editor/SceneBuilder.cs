@@ -18,6 +18,7 @@ public static class SceneBuilder
     static Sprite _wallSprite;     // pared del usuario o suelo de respaldo
     static bool _wallTiled;
     static Sprite _doorSprite;     // puerta del usuario o generada
+    static Sprite _playerSprite;   // personaje del usuario (sprite unico) o null = rig generado
 
     [MenuItem("Juego Mental/Build Scenes")]
     public static void BuildAll()
@@ -35,6 +36,7 @@ public static class SceneBuilder
         _wallTiled = TryImportUser("pared", true, out _wallSprite);
         if (!_wallTiled) _wallSprite = _groundSprite;
         if (!TryImportUser("puerta", false, out _doorSprite, 2.6f)) _doorSprite = S("door");
+        TryImportUser("personaje", false, out _playerSprite, 2.2f); // null => rig generado
 
         Directory.CreateDirectory(PrefabDir);
         Directory.CreateDirectory(SceneDir);
@@ -151,6 +153,50 @@ public static class SceneBuilder
     }
 
     static GameObject BuildPlayerPrefab()
+    {
+        if (_playerSprite != null) return BuildSpritePlayer();
+        return BuildRigPlayer();
+    }
+
+    // Jugador con la imagen del usuario (un solo sprite) + rebote al caminar.
+    static GameObject BuildSpritePlayer()
+    {
+        var go = new GameObject("Player") { tag = "Player", layer = LayerMask.NameToLayer("Player") };
+        var rb = go.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 3f;
+        rb.freezeRotation = true;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        var col = go.AddComponent<CapsuleCollider2D>();
+        col.size = new Vector2(1.0f, 2.0f);
+        col.offset = new Vector2(-0.2f, -0.05f);
+
+        var visual = new GameObject("Visual");
+        visual.transform.SetParent(go.transform);
+        visual.transform.localPosition = Vector3.zero;
+        var sr = visual.AddComponent<SpriteRenderer>();
+        sr.sprite = _playerSprite; sr.sortingOrder = 10;
+
+        var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(-0.2f, -1.05f, 0f);
+        var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.8f, 0.1f, 0f);
+
+        var pc = go.AddComponent<PlayerController2D>();
+        pc.groundCheck = gc.transform; pc.groundMask = Mask("Ground");
+        pc.moveSpeed = 6f; pc.jumpForce = 12f; pc.maxJumps = 2;
+
+        var pa = go.AddComponent<PlayerAttack>();
+        pa.enemyMask = Mask("Enemy"); pa.attackOrigin = ao.transform;
+
+        var bob = go.AddComponent<SpriteBob>();
+        bob.visual = visual.transform;
+
+        go.AddComponent<CortisolSystem>();
+
+        var prefab = PrefabUtility.SaveAsPrefabAsset(go, PrefabDir + "/Player.prefab");
+        Object.DestroyImmediate(go);
+        return prefab;
+    }
+
+    static GameObject BuildRigPlayer()
     {
         var go = new GameObject("Player") { tag = "Player", layer = LayerMask.NameToLayer("Player") };
         var rb = go.AddComponent<Rigidbody2D>();
@@ -339,7 +385,7 @@ public static class SceneBuilder
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        var pl = Spawn(player, new Vector3(0f, -1.7f, 0f));
+        var pl = Spawn(player, new Vector3(0f, -1.95f, 0f));
         CreateCamera(new Color(0.30f, 0.30f, 0.40f), pl.transform);
 
         // base ancha
@@ -371,7 +417,7 @@ public static class SceneBuilder
         const float startX = -75f;
         const float endX = 75f;
 
-        var pl = Spawn(player, new Vector3(startX, -1.25f, 0f));
+        var pl = Spawn(player, new Vector3(startX, -1.45f, 0f));
         CreateCamera(new Color(0.18f, 0.30f, 0.34f), pl.transform);
         var cortisol = pl.GetComponent<CortisolSystem>();
 
