@@ -36,7 +36,7 @@ public static class SceneBuilder
         _wallTiled = TryImportUser("pared", true, out _wallSprite);
         if (!_wallTiled) _wallSprite = _groundSprite;
         if (!TryImportUser("puerta", false, out _doorSprite, 2.6f)) _doorSprite = S("door");
-        TryImportUser("personaje", false, out _playerSprite, 2.2f); // null => rig generado
+        _playerSprite = null; // usar el rig articulado generado (no la imagen del usuario)
 
         Directory.CreateDirectory(PrefabDir);
         Directory.CreateDirectory(SceneDir);
@@ -385,7 +385,7 @@ public static class SceneBuilder
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-        var pl = Spawn(player, new Vector3(0f, -1.95f, 0f));
+        var pl = Spawn(player, new Vector3(0f, -1.7f, 0f));
         CreateCamera(new Color(0.30f, 0.30f, 0.40f), pl.transform);
 
         // base ancha
@@ -417,7 +417,7 @@ public static class SceneBuilder
         const float startX = -75f;
         const float endX = 75f;
 
-        var pl = Spawn(player, new Vector3(startX, -1.45f, 0f));
+        var pl = Spawn(player, new Vector3(startX, -1.2f, 0f));
         CreateCamera(new Color(0.18f, 0.30f, 0.34f), pl.transform);
         var cortisol = pl.GetComponent<CortisolSystem>();
 
