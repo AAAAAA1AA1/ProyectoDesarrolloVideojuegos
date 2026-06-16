@@ -12,10 +12,9 @@ namespace JuegoMental.Core
             Amount = amount;
         }
 
-        public void ApplyTo(CortisolModel cortisol)
-        {
-            float delta = Kind == PickupKind.Bad ? Amount : -Amount;
-            cortisol.Add(delta);
-        }
+        /// <summary>delta firmado a aplicar al cortisol: malo sube (+), bueno baja (-).</summary>
+        public float Delta => Kind == PickupKind.Bad ? Amount : -Amount;
+
+        public void ApplyTo(CortisolModel cortisol) => cortisol.Add(Delta);
     }
 }
