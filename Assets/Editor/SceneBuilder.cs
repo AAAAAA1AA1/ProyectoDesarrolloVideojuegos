@@ -262,12 +262,12 @@ public static class SceneBuilder
         // pistola siempre visible, sostenida al frente (apunta hacia donde mira)
         var gunGo = new GameObject("Gun");
         gunGo.transform.SetParent(go.transform);
-        gunGo.transform.localPosition = new Vector3(0.45f, 0.05f, 0f);
+        gunGo.transform.localPosition = new Vector3(0.45f, -0.45f, 0f);
         var gsr = gunGo.AddComponent<SpriteRenderer>();
         gsr.sprite = S("p_gun"); gsr.sortingOrder = 13;
 
         var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(0f, -1.2f, 0f);
-        var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.95f, 0.05f, 0f);
+        var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.95f, -0.6f, 0f);
 
         var pc = go.AddComponent<PlayerController2D>();
         pc.groundCheck = gc.transform;
