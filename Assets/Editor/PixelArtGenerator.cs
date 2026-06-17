@@ -21,7 +21,8 @@ public static class PixelArtGenerator
         SaveSprite("p_torso.png", Torso());
         SaveSprite("p_arm.png",   ArmSprite());
         SaveSprite("p_leg.png",   LegSprite());
-        SaveSprite("p_sword.png", Sword());
+        SaveSprite("p_gun.png",   Gun());
+        SaveSprite("p_bullet.png", Bullet());
 
         // Fondo tipo cueva (aproximacion al estilo enviado).
         SaveSprite("bg_cave.png", CaveBg());
@@ -174,14 +175,27 @@ public static class PixelArtGenerator
         return px;
     }
 
-    static Color32[] Sword()
+    static Color32[] Gun()
     {
-        int w = 13, h = 5;
+        int w = 14, h = 7;
         var px = Fill(w, h, new Color32(0, 0, 0, 0));
-        Rect(px, w, 1, 1, 2, 3, new Color32(110, 80, 50, 255));   // mango
-        Rect(px, w, 3, 2, 1, 1, new Color32(190, 170, 70, 255));  // guarda
-        Rect(px, w, 4, 1, 8, 3, new Color32(220, 220, 235, 255)); // hoja
-        Rect(px, w, 4, 2, 8, 1, new Color32(170, 175, 195, 255)); // filo sombreado
+        var metal = new Color32(95, 100, 112, 255);
+        var metalSh = new Color32(60, 65, 78, 255);
+        var grip = new Color32(75, 52, 40, 255);
+        Rect(px, w, 1, 3, 11, 3, metal);     // cuerpo/canon
+        Rect(px, w, 1, 3, 11, 1, metalSh);   // sombra inferior
+        Rect(px, w, 2, 0, 3, 3, grip);       // empunadura
+        Rect(px, w, 12, 4, 2, 2, metal);     // boca del canon
+        Outline(px, w, h);
+        return px;
+    }
+
+    static Color32[] Bullet()
+    {
+        int w = 6, h = 4;
+        var px = Fill(w, h, new Color32(0, 0, 0, 0));
+        Rect(px, w, 0, 1, 4, 2, new Color32(235, 195, 70, 255));  // cuerpo
+        Rect(px, w, 4, 1, 2, 2, new Color32(205, 120, 40, 255));  // punta
         Outline(px, w, h);
         return px;
     }
@@ -387,7 +401,8 @@ public static class PixelArtGenerator
             case "p_torso.png":       return (14, 24);
             case "p_arm.png":         return (5, 11);
             case "p_leg.png":         return (6, 12);
-            case "p_sword.png":       return (13, 5);
+            case "p_gun.png":         return (14, 7);
+            case "p_bullet.png":      return (6, 4);
             case "door.png":          return (20, 32);
             default:                  return (16, 16);
         }

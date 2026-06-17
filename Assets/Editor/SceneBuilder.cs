@@ -21,6 +21,7 @@ public static class SceneBuilder
     static bool _wallTiled;
     static Sprite _doorSprite;     // puerta del usuario o generada
     static Sprite _playerSprite;   // personaje del usuario (sprite unico) o null = rig generado
+    static GameObject _playerBullet; // bala que dispara el jugador
 
     [MenuItem("Juego Mental/Build Scenes")]
     public static void BuildAll()
@@ -43,6 +44,7 @@ public static class SceneBuilder
         Directory.CreateDirectory(PrefabDir);
         Directory.CreateDirectory(SceneDir);
 
+        _playerBullet = BuildPlayerBulletPrefab();
         var player = BuildPlayerPrefab();
         var projectile = BuildProjectilePrefab();
         var melee = BuildEnemyPrefab("PatrolEnemy", "enemy_patrol", typeof(PatrolEnemy));
@@ -72,6 +74,18 @@ public static class SceneBuilder
         var col = go.AddComponent<CircleCollider2D>(); col.isTrigger = true; col.radius = 0.25f;
         go.AddComponent<EnemyProjectile>();
         var prefab = PrefabUtility.SaveAsPrefabAsset(go, PrefabDir + "/Projectile.prefab");
+        Object.DestroyImmediate(go);
+        return prefab;
+    }
+
+    static GameObject BuildPlayerBulletPrefab()
+    {
+        var go = new GameObject("PlayerBullet");
+        var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = S("p_bullet"); sr.sortingOrder = 9;
+        var rb = go.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Kinematic;
+        var col = go.AddComponent<BoxCollider2D>(); col.isTrigger = true; col.size = new Vector2(0.4f, 0.25f);
+        go.AddComponent<PlayerBullet>();
+        var prefab = PrefabUtility.SaveAsPrefabAsset(go, PrefabDir + "/PlayerBullet.prefab");
         Object.DestroyImmediate(go);
         return prefab;
     }
@@ -204,7 +218,7 @@ public static class SceneBuilder
         pc.moveSpeed = 6f; pc.jumpForce = 12f; pc.maxJumps = 2;
 
         var pa = go.AddComponent<PlayerAttack>();
-        pa.enemyMask = Mask("Enemy"); pa.attackOrigin = ao.transform;
+        pa.attackOrigin = ao.transform; pa.bulletPrefab = _playerBullet;
 
         var bob = go.AddComponent<SpriteBob>();
         bob.visual = visual.transform;
@@ -245,16 +259,15 @@ public static class SceneBuilder
         Transform armFrontSprite;
         var armFront = MakeLimb("ArmFront", go.transform, new Vector3(-0.22f, 0.06f, 0f), "p_arm", 12, out armFrontSprite);
 
-        // espada en la mano del brazo frontal (oculta hasta atacar)
-        var swordGo = new GameObject("Sword");
-        swordGo.transform.SetParent(armFront);
-        swordGo.transform.localPosition = new Vector3(0f, -0.7f, 0f);
-        swordGo.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
-        var swsr = swordGo.AddComponent<SpriteRenderer>();
-        swsr.sprite = S("p_sword"); swsr.sortingOrder = 13;
+        // pistola siempre visible, sostenida al frente (apunta hacia donde mira)
+        var gunGo = new GameObject("Gun");
+        gunGo.transform.SetParent(go.transform);
+        gunGo.transform.localPosition = new Vector3(0.45f, 0.05f, 0f);
+        var gsr = gunGo.AddComponent<SpriteRenderer>();
+        gsr.sprite = S("p_gun"); gsr.sortingOrder = 13;
 
         var gc = new GameObject("GroundCheck"); gc.transform.SetParent(go.transform); gc.transform.localPosition = new Vector3(0f, -1.2f, 0f);
-        var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.6f, 0f, 0f);
+        var ao = new GameObject("AttackOrigin"); ao.transform.SetParent(go.transform); ao.transform.localPosition = new Vector3(0.95f, 0.05f, 0f);
 
         var pc = go.AddComponent<PlayerController2D>();
         pc.groundCheck = gc.transform;
@@ -266,11 +279,11 @@ public static class SceneBuilder
         var anim = go.AddComponent<LimbAnimator>();
         anim.armFront = armFront; anim.armBack = armBack;
         anim.legFront = legFront; anim.legBack = legBack;
-        anim.sword = swordGo;
+        anim.sword = null; // sin objeto que ocultar; la pistola va siempre visible
 
         var pa = go.AddComponent<PlayerAttack>();
-        pa.enemyMask = Mask("Enemy");
         pa.attackOrigin = ao.transform;
+        pa.bulletPrefab = _playerBullet;
 
         go.AddComponent<CortisolSystem>();
 

@@ -5,18 +5,15 @@ namespace JuegoMental
     public class PlayerAttack : MonoBehaviour
     {
         public float damage = 1f;
-        public float range = 0.8f;
-        public float cooldown = 0.4f;
-        public LayerMask enemyMask;
-        public Transform attackOrigin; // punto frente al jugador
+        public float cooldown = 0.35f;
+        public float bulletSpeed = 14f;
+        public GameObject bulletPrefab;
+        public Transform attackOrigin; // boca del cañón
 
         float _next;
         LimbAnimator _anim;
 
-        void Awake()
-        {
-            _anim = GetComponentInChildren<LimbAnimator>();
-        }
+        void Awake() => _anim = GetComponentInChildren<LimbAnimator>();
 
         void Update()
         {
@@ -24,22 +21,23 @@ namespace JuegoMental
             {
                 _next = Time.time + cooldown;
                 if (_anim != null) _anim.TriggerAttack();
-                DoAttack();
+                Shoot();
             }
         }
 
-        void DoAttack()
+        void Shoot()
         {
-            Vector2 dir = transform.localScale.x < 0f ? Vector2.left : Vector2.right;
-            Vector2 origin = attackOrigin != null
-                ? (Vector2)attackOrigin.position
-                : (Vector2)transform.position + dir * 0.5f;
-            var hits = Physics2D.OverlapCircleAll(origin, range, enemyMask);
-            foreach (var h in hits)
+            if (bulletPrefab == null) return;
+            float dir = transform.localScale.x < 0f ? -1f : 1f;
+            Vector2 origin = attackOrigin != null ? (Vector2)attackOrigin.position : (Vector2)transform.position;
+            var b = Instantiate(bulletPrefab, origin, Quaternion.identity);
+            var pb = b.GetComponent<PlayerBullet>();
+            if (pb != null)
             {
-                var enemy = h.GetComponent<EnemyBase>();
-                if (enemy != null) enemy.TakeDamage(damage);
+                pb.velocity = new Vector2(dir * bulletSpeed, 0f);
+                pb.damage = damage;
             }
+            if (dir < 0f) { var s = b.transform.localScale; s.x = -Mathf.Abs(s.x); b.transform.localScale = s; }
         }
     }
 }
