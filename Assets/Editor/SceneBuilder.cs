@@ -1,7 +1,9 @@
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 using UnityEditor;
+using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using JuegoMental;
 using JuegoMental.Core;
@@ -52,13 +54,14 @@ public static class SceneBuilder
         var bad = BuildPickupPrefab("PickupBad", "item_bad", PickupKind.Bad);
         var door = BuildDoorPrefab();
 
+        BuildMainMenu();
         BuildHub(player, door);
         for (int f = 1; f <= 10; f++)
             BuildLevel(f, player, melee, ranged, good, bad, door);
 
         SetBuildSettings();
         AssetDatabase.SaveAssets();
-        Debug.Log("Escenas construidas: Hub + 10 niveles");
+        Debug.Log("Escenas construidas: MainMenu + Hub + 10 niveles");
     }
 
     static GameObject BuildProjectilePrefab()
@@ -422,6 +425,20 @@ public static class SceneBuilder
             var ld = d.GetComponent<LevelDoor>();
             ld.mode = LevelDoor.Mode.EnterLevel;
             ld.floor = i + 1;
+
+            // numero del nivel sobre la puerta
+            var lblGo = new GameObject("DoorLabel");
+            lblGo.transform.position = new Vector3(x, y + 1.9f, 0f);
+            var tm = lblGo.AddComponent<TextMesh>();
+            tm.text = (i + 1).ToString();
+            tm.anchor = TextAnchor.MiddleCenter;
+            tm.alignment = TextAlignment.Center;
+            tm.fontSize = 64; tm.characterSize = 0.18f; tm.color = Color.white;
+            var f = UIFont();
+            tm.font = f;
+            var mr = lblGo.GetComponent<MeshRenderer>();
+            mr.sharedMaterial = f.material;
+            mr.sortingOrder = 20;
         }
 
         EditorSceneManager.SaveScene(scene, SceneDir + "/Hub.unity");
@@ -476,8 +493,97 @@ public static class SceneBuilder
         ld.floor = floor;
 
         BuildStressUI(cortisol);
+        BuildGameOver(cortisol);
 
         EditorSceneManager.SaveScene(scene, SceneDir + $"/Level_{floor:00}.unity");
+    }
+
+    // ---------- helpers UI ----------
+
+    static Font UIFont() => Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+    static void EnsureEventSystem()
+    {
+        if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem),
+                typeof(UnityEngine.EventSystems.StandaloneInputModule));
+    }
+
+    static GameObject NewCanvas(string name)
+    {
+        var go = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        go.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+        EnsureEventSystem();
+        return go;
+    }
+
+    static Text CreateText(Transform parent, string content, int size, Vector2 pos, Vector2 sizeDelta, TextAnchor anchor = TextAnchor.MiddleCenter)
+    {
+        var go = new GameObject("Text", typeof(Text));
+        go.transform.SetParent(parent, false);
+        var t = go.GetComponent<Text>();
+        t.text = content; t.font = UIFont(); t.fontSize = size; t.color = Color.white; t.alignment = anchor;
+        var rt = t.rectTransform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = pos; rt.sizeDelta = sizeDelta;
+        return t;
+    }
+
+    static Button CreateButton(Transform parent, string label, Vector2 pos, Vector2 size, UnityAction action)
+    {
+        var go = new GameObject("Button", typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        go.GetComponent<Image>().color = new Color(0.22f, 0.52f, 0.36f, 1f);
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = pos; rt.sizeDelta = size;
+        var label2 = CreateText(go.transform, label, 26, Vector2.zero, size);
+        label2.rectTransform.anchorMin = Vector2.zero; label2.rectTransform.anchorMax = Vector2.one;
+        label2.rectTransform.offsetMin = Vector2.zero; label2.rectTransform.offsetMax = Vector2.zero;
+        var btn = go.GetComponent<Button>();
+        UnityEventTools.AddPersistentListener(btn.onClick, action);
+        return btn;
+    }
+
+    static void BuildMainMenu()
+    {
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+        var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
+        var cam = camGo.AddComponent<Camera>();
+        cam.orthographic = true; cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.10f, 0.13f, 0.20f);
+        camGo.transform.position = new Vector3(0f, 0f, -10f);
+        camGo.AddComponent<AudioListener>();
+
+        var ui = new GameObject("UIActions").AddComponent<UIActions>();
+        var canvas = NewCanvas("Canvas");
+
+        CreateText(canvas.transform, "Bienvenido a Mundo Mental", 44, new Vector2(0f, 140f), new Vector2(900f, 120f));
+        CreateText(canvas.transform, "Sube la torre sin que el cortisol te gane", 22, new Vector2(0f, 60f), new Vector2(800f, 50f));
+        CreateButton(canvas.transform, "Jugar", new Vector2(0f, -40f), new Vector2(260f, 80f), ui.PlayGame);
+
+        EditorSceneManager.SaveScene(scene, SceneDir + "/MainMenu.unity");
+    }
+
+    static void BuildGameOver(CortisolSystem cortisol)
+    {
+        var ui = new GameObject("UIActions").AddComponent<UIActions>();
+        var canvas = NewCanvas("GameOverCanvas");
+
+        var panel = new GameObject("Panel", typeof(Image));
+        panel.transform.SetParent(canvas.transform, false);
+        panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.7f);
+        var prt = panel.GetComponent<RectTransform>();
+        prt.anchorMin = Vector2.zero; prt.anchorMax = Vector2.one; prt.offsetMin = Vector2.zero; prt.offsetMax = Vector2.zero;
+
+        CreateText(panel.transform, "Has perdido", 48, new Vector2(0f, 90f), new Vector2(700f, 120f));
+        CreateButton(panel.transform, "Intentar de nuevo", new Vector2(0f, 0f), new Vector2(320f, 70f), ui.RestartLevel);
+        CreateButton(panel.transform, "Salir", new Vector2(0f, -90f), new Vector2(320f, 70f), ui.QuitToMenu);
+
+        var go = canvas.AddComponent<GameOverUI>();
+        go.cortisol = cortisol;
+        go.panel = panel;
     }
 
     static void BuildStressUI(CortisolSystem cortisol)
@@ -522,15 +628,27 @@ public static class SceneBuilder
         frt.anchorMin = Vector2.zero; frt.anchorMax = Vector2.one;
         frt.offsetMin = Vector2.zero; frt.offsetMax = Vector2.zero;
 
+        // texto de porcentaje a la derecha de la barra
+        var pctGo = new GameObject("Percent", typeof(Text));
+        pctGo.transform.SetParent(canvasGo.transform, false);
+        var pct = pctGo.GetComponent<Text>();
+        pct.text = "0%"; pct.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        pct.fontSize = 20; pct.color = Color.white; pct.alignment = TextAnchor.MiddleLeft;
+        var pr = pct.rectTransform;
+        pr.anchorMin = pr.anchorMax = new Vector2(0f, 1f); pr.pivot = new Vector2(0f, 1f);
+        pr.anchoredPosition = new Vector2(378f, -18f); pr.sizeDelta = new Vector2(80f, 28f);
+
         var ui = canvasGo.AddComponent<StressBarUI>();
         ui.cortisol = cortisol;
         ui.fill = fill;
+        ui.percent = pct;
     }
 
     static void SetBuildSettings()
     {
         var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>
         {
+            new EditorBuildSettingsScene(SceneDir + "/MainMenu.unity", true),
             new EditorBuildSettingsScene(SceneDir + "/Hub.unity", true)
         };
         for (int f = 1; f <= 10; f++)

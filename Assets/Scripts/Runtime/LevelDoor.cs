@@ -10,18 +10,24 @@ namespace JuegoMental
 
         bool _playerInside;
 
+        void Start()
+        {
+            // atenuar puertas ya completadas (no se puede entrar)
+            if (mode == Mode.EnterLevel && GameManager.IsCompleted(floor))
+            {
+                var sr = GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = new Color(0.45f, 0.45f, 0.45f, 1f);
+            }
+        }
+
         void OnTriggerEnter2D(Collider2D other) { if (other.CompareTag("Player")) _playerInside = true; }
-        void OnTriggerExit2D(Collider2D other)  { if (other.CompareTag("Player")) _playerInside = false; }
+        void OnTriggerExit2D(Collider2D other) { if (other.CompareTag("Player")) _playerInside = false; }
 
         void Update()
         {
-            if (!_playerInside) return;
-            if (mode == Mode.EnterLevel && Input.GetKeyDown(KeyCode.E))
-                GameManager.EnterLevel(floor);
-            else if (mode == Mode.ExitToHub && Input.GetKeyDown(KeyCode.E))
-                GameManager.CompleteLevel(floor);
+            if (!_playerInside || !Input.GetKeyDown(KeyCode.E)) return;
+            if (mode == Mode.EnterLevel) GameManager.EnterLevel(floor); // ignora si completada/bloqueada
+            else GameManager.CompleteLevel(floor);
         }
-
-        public bool Unlocked => floor <= GameManager.UnlockedFloor;
     }
 }

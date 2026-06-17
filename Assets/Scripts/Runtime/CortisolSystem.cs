@@ -18,7 +18,6 @@ namespace JuegoMental
         void Awake()
         {
             _model = new CortisolModel(max);
-            OnLost += () => GameManager.RestartLevel();
         }
 
         public void Add(float delta)
