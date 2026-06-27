@@ -5,37 +5,24 @@ namespace JuegoMental
     public class PatrolEnemy : EnemyBase
     {
         public float speed = 2f;
-        public float range = 3f;
-
-        [Header("Ataque melee")]
-        public float meleeRange = 1.7f;
-        public float strikeCortisol = 18f;
-        public float strikeCooldown = 1.5f;
-
-        Vector2 _start;
-        int _dir = 1;
-        Transform _player;
-        float _nextStrike;
+        public float range = 5f;
+        private Vector2 _startPos;
+        private int _dir = 1;
 
         protected override void Awake()
         {
-            base.Awake();
-            _start = transform.position;
-            var p = GameObject.FindWithTag("Player");
-            if (p != null) _player = p.transform;
+            base.Awake(); // Llama al Awake de EnemyBase para inicializar la vida
+            _startPos = transform.position;
         }
 
         void Update()
         {
+            // Movimiento de patrulla
             transform.Translate(Vector2.right * _dir * speed * Time.deltaTime);
-            if (Mathf.Abs(transform.position.x - _start.x) >= range) _dir = -_dir;
-
-            if (_player != null && Time.time >= _nextStrike &&
-                Vector2.Distance(transform.position, _player.position) <= meleeRange)
+            if (Mathf.Abs(transform.position.x - _startPos.x) >= range)
             {
-                _nextStrike = Time.time + strikeCooldown;
-                var c = _player.GetComponentInParent<CortisolSystem>();
-                if (c != null) c.Add(strikeCortisol);
+                _dir *= -1;
+                transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
             }
         }
     }

@@ -11,21 +11,26 @@ namespace JuegoMental
         public event Action OnLost;
 
         CortisolModel _model;
-        public float Value => _model.Value;
-        public float Max => _model.Max;
-        public float Fraction => _model.Value / _model.Max;
 
-        void Awake()
-        {
-            _model = new CortisolModel(max);
-        }
+        public float Value => _model != null ? _model.Value : 0f;
+        public float Max => _model != null ? _model.Max : max;
+        public float Fraction => _model != null ? _model.Value / _model.Max : 0f;
+
+        void Awake() => _model = new CortisolModel(max);
 
         public void Add(float delta)
         {
-            if (_model.IsLost) return;
+            if (_model == null || _model.IsLost) return;
+
             _model.Add(delta);
             OnChanged?.Invoke();
-            if (_model.IsLost) OnLost?.Invoke();
+
+            // Verificación forzada de seguridad
+            if (_model.Value >= max)
+            {
+                Debug.Log("Cortisol máximo alcanzado: Game Over");
+                OnLost?.Invoke();
+            }
         }
     }
 }

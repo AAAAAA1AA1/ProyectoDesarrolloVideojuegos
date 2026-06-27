@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0d78cfd732171f419f51ac59aa94ca4, type: 3}
+  m_Name: Pregunta 3
+  m_EditorClassIdentifier: JuegoMental.Runtime::JuegoMental.DecisionData
+  questionText: "Un colega te critica duramente frente a otros por un error peque\xF1o"
+  optionAText: "Responder con otra cr\xEDtica agresiva para defenderse en ese mismo
+    instante"
+  optionBText: "Mantener la calma, reconocer el error si es real y pedir hablar en
+    privado sobre la cr\xEDtica"
+  isOptionACorrect: 0
+  cortisolChange: -20
+  ammoReward: 10
+  enemiesToSpawn: 1

@@ -6,13 +6,13 @@ namespace JuegoMental
     public abstract class EnemyBase : MonoBehaviour
     {
         public float maxHp = 3f;
-        public float contactCortisol = 15f; // sube al jugador al tocar
+        public float contactCortisol = 15f;
         public float contactCooldown = 1f;
 
         protected EnemyHealth Health;
         float _nextContact;
 
-        public System.Action<float> OnHealthChanged; // fraction
+        public System.Action<float> OnHealthChanged;
 
         protected virtual void Awake() => Health = new EnemyHealth(maxHp);
 
@@ -23,10 +23,12 @@ namespace JuegoMental
             if (Health.IsDead) Destroy(gameObject);
         }
 
+        // Se mantienen como private ya que Unity llama a estos mensajes internamente
         void OnCollisionStay2D(Collision2D col) => TryContact(col.collider);
         void OnTriggerStay2D(Collider2D other) => TryContact(other);
 
-        void TryContact(Collider2D other)
+        // CORRECCIÓN: Cambiado de 'void' a 'protected void'
+        protected void TryContact(Collider2D other)
         {
             if (Time.time < _nextContact) return;
             var c = other.GetComponentInParent<CortisolSystem>();
