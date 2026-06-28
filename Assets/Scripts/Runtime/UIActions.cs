@@ -3,7 +3,6 @@ using UnityEngine.SceneManagement;
 
 namespace JuegoMental
 {
-    /// <summary>Acciones para botones de UI (menu y game over).</summary>
     public class UIActions : MonoBehaviour
     {
         public void PlayGame()

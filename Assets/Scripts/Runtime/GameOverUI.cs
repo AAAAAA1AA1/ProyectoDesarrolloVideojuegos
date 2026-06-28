@@ -6,13 +6,21 @@ namespace JuegoMental
     public class GameOverUI : MonoBehaviour
     {
         [Header("Configuración de Game Over")]
-        // Hacemos 'cortisol' público de nuevo para que SceneBuilder pueda verlo
         public CortisolSystem cortisol;
         public GameObject panel;
         public Text statusText;
 
         [Header("Elementos de UI a limpiar")]
         public GameObject[] objetosParaOcultar;
+
+        void Awake()
+        {
+            // 1. FORZAMOS EL TIEMPO A 1 AL CARGAR LA ESCENA
+            Time.timeScale = 1f;
+
+            // 2. Aseguramos que el panel esté oculto apenas inicia
+            if (panel != null) panel.SetActive(false);
+        }
 
         void OnEnable()
         {
@@ -55,11 +63,8 @@ namespace JuegoMental
             {
                 panel.SetActive(true);
             }
-            else
-            {
-                Debug.LogError("GameOverUI: ¡Falta asignar el 'panel' en el Inspector!");
-            }
 
+            // 3. Solo pausamos si el panel realmente se activó
             Time.timeScale = 0f;
         }
     }
