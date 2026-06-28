@@ -23,7 +23,9 @@ namespace JuegoMental
 
         public static void EnterLevel(int floor)
         {
-            if (floor > UnlockedFloor || IsCompleted(floor)) return;
+            // Solo bloqueamos si el nivel es mayor al que tenemos desbloqueado
+            if (floor > UnlockedFloor) return;
+
             Time.timeScale = 1f;
             SceneManager.LoadScene($"Level_{floor:00}");
         }
@@ -31,27 +33,15 @@ namespace JuegoMental
         public static void CompleteLevel(int floor)
         {
             MarkCompleted(floor);
+            // Si terminamos el nivel actual, desbloqueamos el siguiente
             if (floor + 1 > UnlockedFloor) UnlockedFloor = floor + 1;
+
             Time.timeScale = 1f;
             SceneManager.LoadScene("Hub");
         }
 
-        public static void RestartLevel()
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
-
-        public static void GoToHub()
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene("Hub");
-        }
-
-        public static void GoToMenu()
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene("MainMenu");
-        }
+        public static void RestartLevel() { Time.timeScale = 1f; SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
+        public static void GoToHub() { Time.timeScale = 1f; SceneManager.LoadScene("Hub"); }
+        public static void GoToMenu() { Time.timeScale = 1f; SceneManager.LoadScene("MainMenu"); }
     }
 }

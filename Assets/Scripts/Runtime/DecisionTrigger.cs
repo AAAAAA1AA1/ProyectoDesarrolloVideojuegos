@@ -5,7 +5,7 @@ namespace JuegoMental
     public class DecisionTrigger : MonoBehaviour
     {
         public StressDecisionManager manager;
-        public DecisionData data; // Arrastra aquí tu asset de DecisionData
+        public DecisionData data;
 
         void OnTriggerEnter2D(Collider2D other)
         {

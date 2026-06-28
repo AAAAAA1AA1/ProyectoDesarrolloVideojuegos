@@ -13,11 +13,9 @@ namespace JuegoMental
         [Header("Gestión de Estrés")]
         public CortisolSystem playerCortisol;
         public float stressPerShot = 2.0f;
-        public float stressEmptyPenalty = 5.0f;
 
         [Header("Munición")]
         public int currentAmmo = 20;
-        public int maxAmmo = 20;
 
         [Header("Estado")]
         public bool isEquipped = false;
@@ -25,25 +23,13 @@ namespace JuegoMental
         private float _nextFireTime;
         private PlayerController2D _playerController;
 
-        void Awake()
-        {
-            _playerController = GetComponentInParent<PlayerController2D>();
-        }
-
         void Update()
         {
-            if (isEquipped && Input.GetButtonDown("Fire1") && Time.time >= _nextFireTime)
+            // AÑADIMOS: La condición 'currentAmmo > 0' aquí
+            if (isEquipped && currentAmmo > 0 && Input.GetButtonDown("Fire1") && Time.time >= _nextFireTime)
             {
-                if (currentAmmo > 0)
-                {
-                    Shoot();
-                    _nextFireTime = Time.time + fireRate;
-                }
-                else
-                {
-                    if (playerCortisol != null)
-                        playerCortisol.Add(stressEmptyPenalty);
-                }
+                Shoot();
+                _nextFireTime = Time.time + fireRate;
             }
         }
 
@@ -51,19 +37,25 @@ namespace JuegoMental
         {
             if (bulletPrefab == null || firePoint == null) return;
 
-            // 1. Instanciamos en la posición del firePoint, pero SIN usar su rotación
+            // Asegurar referencia del jugador
+            if (_playerController == null)
+            {
+                _playerController = transform.root.GetComponentInChildren<PlayerController2D>();
+            }
+
+            if (_playerController == null) return;
+
             GameObject bulletObj = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
             PlayerBullet bullet = bulletObj.GetComponent<PlayerBullet>();
 
             if (bullet != null)
             {
-                // 2. Determinamos la dirección horizontal pura:
-                // Si el padre tiene escala negativa, disparamos a la izquierda, si no, a la derecha.
-                float dirX = (transform.root.lossyScale.x >= 0) ? 1f : -1f;
-
-                // 3. Forzamos velocidad en X, 0 en Y (esto elimina la diagonal)
+                float dirX = _playerController.isFacingRight ? 1f : -1f;
                 bullet.velocity = new Vector2(dirX * bulletSpeed, 0);
             }
+
+            // Ahora, como el 'Update' ya impide disparar si es 0, 
+            // esto solo se ejecutará cuando sea seguro restar.
             currentAmmo--;
         }
     }

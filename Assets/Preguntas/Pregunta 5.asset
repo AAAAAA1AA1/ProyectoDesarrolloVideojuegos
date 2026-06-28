@@ -15,8 +15,8 @@ MonoBehaviour:
   questionText: "Te das cuenta de que has cometido un error que afectar\xE1 a todo
     el equipo"
   optionAText: "Comunicarlo al equipo inmediatamente con una soluci\xF3n propuesta"
-  optionBText: "ntentar ocultar el error esperando que nadie se d\xE9 cuenta"
-  isOptionACorrect: 0
+  optionBText: "Intentar ocultar el error esperando que nadie se d\xE9 cuenta"
+  isOptionACorrect: 1
   cortisolChange: -20
   ammoReward: 10
   enemiesToSpawn: 0

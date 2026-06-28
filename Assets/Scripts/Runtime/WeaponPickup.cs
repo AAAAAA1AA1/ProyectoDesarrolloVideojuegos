@@ -41,11 +41,23 @@ namespace JuegoMental
                 Weapon weapon = GetComponent<Weapon>();
                 if (weapon != null)
                 {
-                    weapon.isEquipped = true; // Aquí activamos la capacidad de disparar
+                    weapon.isEquipped = true;
+
+                    // Usamos FindFirstObjectByType (sintaxis moderna)
+                    AmmoUI ui = Object.FindFirstObjectByType<AmmoUI>();
+
+                    if (ui != null)
+                    {
+                        ui.weaponToTrack = weapon; // Ahora sí reconocerá la variable pública
+                    }
+                    else
+                    {
+                        Debug.LogWarning("No se encontró ningún script AmmoUI en la escena.");
+                    }
                 }
             }
         }
 
-      
+
     }
 }

@@ -5,16 +5,26 @@ namespace JuegoMental
 {
     public class GameOverUI : MonoBehaviour
     {
-        public CortisolSystem cortisol; // Arrastra el objeto Player aquí
-        public GameObject panel;        // Arrastra el panel de "Has perdido" aquí
-        public UnityEngine.UI.Text statusText;
-        void Start()
+        [Header("Configuración de Game Over")]
+        // Hacemos 'cortisol' público de nuevo para que SceneBuilder pueda verlo
+        public CortisolSystem cortisol;
+        public GameObject panel;
+        public Text statusText;
+
+        [Header("Elementos de UI a limpiar")]
+        public GameObject[] objetosParaOcultar;
+
+        void OnEnable()
         {
-            if (panel != null) panel.SetActive(false);
-            if (cortisol != null) cortisol.OnLost += ShowByStress;
+            if (cortisol == null) cortisol = FindObjectOfType<CortisolSystem>();
+
+            if (cortisol != null)
+            {
+                cortisol.OnLost += ShowByStress;
+            }
         }
 
-        void OnDestroy()
+        void OnDisable()
         {
             if (cortisol != null) cortisol.OnLost -= ShowByStress;
         }
@@ -24,8 +34,32 @@ namespace JuegoMental
 
         void Show(string message)
         {
+            LevelManager lm = FindObjectOfType<LevelManager>();
+            if (lm != null)
+            {
+                lm.EsconderMensajes();
+                if (lm.mensajeInicio != null) lm.mensajeInicio.SetActive(false);
+            }
+
+            if (objetosParaOcultar != null)
+            {
+                foreach (GameObject obj in objetosParaOcultar)
+                {
+                    if (obj != null) obj.SetActive(false);
+                }
+            }
+
             if (statusText != null) statusText.text = message;
-            if (panel != null) panel.SetActive(true);
+
+            if (panel != null)
+            {
+                panel.SetActive(true);
+            }
+            else
+            {
+                Debug.LogError("GameOverUI: ¡Falta asignar el 'panel' en el Inspector!");
+            }
+
             Time.timeScale = 0f;
         }
     }
